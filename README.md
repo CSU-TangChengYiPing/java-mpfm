@@ -72,6 +72,8 @@ cp .env.example .env
 
 数据库这一组建议至少确认下面这些值，尤其是本地 PostgreSQL 地址、账号密码和连接池参数：
 
+**这里着重强调数据库mpfm_dev是否存在！！！若不存在，请更换为已存在的或者创建一个数据库，否则会报错。**
+
 ```env
 MPFM_DB_URL=jdbc:postgresql://localhost:5432/mpfm_dev
 MPFM_DB_USERNAME=postgres
