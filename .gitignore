@@ -1,0 +1,119 @@
+docs/
+AGENTS.md 
+artifacts/
+tmp*.bin
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.swp
+*.swo
+*~
+
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# =========================
+# Env / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+*.pem
+*.cer
+*.key
+*.p12
+*.jks
+*.keystore
+secrets/
+
+# =========================
+# Logs / Runtime
+# =========================
+*.log
+logs/
+**/logs/
+backend/data/
+*.pid
+*.pid.lock
+*.seed
+*.out
+*.err
+
+# =========================
+# Temp / Cache
+# =========================
+temp/
+tmp/
+.tmp/
+.cache/
+*.tmp
+
+# =========================
+# Java / Maven / Gradle
+# =========================
+target/
+**/target/
+build/
+**/build/
+out/
+.gradle/
+.mvn/wrapper/maven-wrapper.jar
+
+# =========================
+# Test / Coverage
+# =========================
+coverage/
+*.lcov
+.nyc_output/
+htmlcov/
+.pytest_cache/
+.coverage
+.coverage.*
+
+# =========================
+# Node / Frontend
+# =========================
+node_modules/
+dist/
+**/dist/
+.next/
+.nuxt/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# =========================
+# Archives / Binaries
+# =========================
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+*.gz
+*.exe
+*.dll
+*.so
+*.dylib
+
+frontend/test-results/*
+new_frontend/test-results/*

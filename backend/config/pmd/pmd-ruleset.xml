@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="mpfm-pmd-ruleset"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.github.io/schema/ruleset_2_0_0.xsd">
+    <description>PMD ruleset for backend baseline checks.</description>
+
+    <rule ref="category/java/bestpractices.xml">
+        <exclude name="JUnit5TestShouldBePackagePrivate"/>
+        <exclude name="LoosePackageCoupling"/>
+    </rule>
+    <rule ref="category/java/errorprone.xml"/>
+    <rule ref="category/java/design.xml">
+        <exclude name="LoosePackageCoupling"/>
+        <exclude name="LawOfDemeter"/>
+        <exclude name="OnlyOneReturn"/>
+        <exclude name="UseUtilityClass"/>
+        <exclude name="AtLeastOneConstructor"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="SignatureDeclareThrowsException"/>
+        <exclude name="CollapsibleIfStatements"/>
+        <exclude name="DataClass"/>
+        <exclude name="AvoidCatchingGenericException"/>
+        <exclude name="AvoidRethrowingException"/>
+        <exclude name="TooManyMethods"/>
+        <exclude name="UseObjectForClearerAPI"/>
+    </rule>
+</ruleset>

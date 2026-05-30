@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: ${MPFM_TEST_DB_URL:${MPFM_DB_URL:jdbc:postgresql://localhost:5432/mpfm_test}}
+    username: ${MPFM_TEST_DB_USERNAME:${MPFM_DB_USERNAME:postgres}}
+    password: ${MPFM_TEST_DB_PASSWORD:${MPFM_DB_PASSWORD:}}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: ${MPFM_TEST_DB_POOL_MIN_IDLE:1}
+      maximum-pool-size: ${MPFM_TEST_DB_POOL_MAX_SIZE:5}
+      auto-commit: ${MPFM_TEST_DB_AUTO_COMMIT:false}
+      transaction-isolation: ${MPFM_TEST_DB_TX_ISOLATION:TRANSACTION_READ_COMMITTED}
+      pool-name: ${MPFM_TEST_DB_POOL_NAME:mpfm-test-hikari}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+
+security:
+  jwt:
+    issuer: ${MPFM_TEST_JWT_ISSUER:test}
+    access-token-expire-seconds: ${MPFM_TEST_ACCESS_TOKEN_EXPIRE_SECONDS:600}
+    refresh-token-expire-seconds: ${MPFM_TEST_REFRESH_TOKEN_EXPIRE_SECONDS:3600}
+    signing-key: ${MPFM_TEST_JWT_SIGNING_KEY:0123456789abcdef0123456789abcdef}
+
+mpfm:
+  local:
+    base-path: ${MPFM_TEST_LOCAL_BASE_PATH:./target/test-local}
+  avatar:
+    base-path: ${MPFM_AVATAR_BASE_PATH:./target/test-avatars}
+    signing-key: ${MPFM_AVATAR_SIGNING_KEY:test_avatar_signing_key_32_chars_min}
+    signed-url-expire-seconds: ${MPFM_AVATAR_SIGNED_URL_EXPIRE_SECONDS:300}
+  rate-limit:
+    capacity: ${MPFM_TEST_RATE_LIMIT_CAPACITY:1000}
+    window-seconds: ${MPFM_TEST_RATE_LIMIT_WINDOW_SECONDS:60}
+  captcha:
+    fixed-answer: ${MPFM_TEST_CAPTCHA_FIXED_ANSWER:123456}

@@ -1,0 +1,97 @@
+server:
+  tomcat:
+    max-swallow-size: ${MPFM_MAX_SWALLOW_SIZE:-1}
+  servlet:
+    multipart:
+      max-file-size: ${MPFM_MAX_FILE_SIZE:1GB}
+      max-request-size: ${MPFM_MAX_REQUEST_SIZE:1GB}
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoints:
+    web:
+      exposure:
+        include: ${MPFM_MANAGEMENT_EXPOSE:health,info,prometheus}
+
+spring:
+  datasource:
+    url: ${MPFM_DB_URL:jdbc:postgresql://localhost:5432/mpfm}
+    username: ${MPFM_DB_USERNAME:mpfm}
+    password: ${MPFM_DB_PASSWORD:mpfm_dev_password}
+    driver-class-name: ${MPFM_DB_DRIVER:org.postgresql.Driver}
+    hikari:
+      minimum-idle: ${MPFM_DB_POOL_MIN_IDLE:5}
+      maximum-pool-size: ${MPFM_DB_POOL_MAX_SIZE:20}
+      auto-commit: ${MPFM_DB_AUTO_COMMIT:false}
+      transaction-isolation: ${MPFM_DB_TX_ISOLATION:TRANSACTION_READ_COMMITTED}
+      pool-name: ${MPFM_DB_POOL_NAME:mpfm-hikari}
+      validation-timeout: ${MPFM_DB_VALIDATION_TIMEOUT_MS:3000}
+  jpa:
+    hibernate:
+      ddl-auto: ${MPFM_JPA_DDL_AUTO:validate}
+    open-in-view: ${MPFM_JPA_OPEN_IN_VIEW:false}
+    properties:
+      hibernate:
+        format_sql: ${MPFM_JPA_FORMAT_SQL:true}
+  flyway:
+    enabled: ${MPFM_FLYWAY_ENABLED:true}
+    locations: ${MPFM_FLYWAY_LOCATIONS:classpath:db/migration}
+  data:
+    redis:
+      host: ${MPFM_REDIS_HOST:localhost}
+      port: ${MPFM_REDIS_PORT:6379}
+      password: ${MPFM_REDIS_PASSWORD:}
+
+springdoc:
+  api-docs:
+    path: ${MPFM_SPRINGDOC_API_DOCS_PATH:/api-docs}
+    enabled: ${MPFM_SPRINGDOC_API_DOCS_ENABLED:true}
+  swagger-ui:
+    path: ${MPFM_SPRINGDOC_SWAGGER_UI_PATH:/swagger-ui.html}
+    enabled: ${MPFM_SPRINGDOC_SWAGGER_UI_ENABLED:true}
+
+scalar:
+  path: ${MPFM_SCALAR_PATH:/scalar}
+  enabled: ${MPFM_SCALAR_ENABLED:true}
+
+security:
+  jwt:
+    issuer: ${MPFM_JWT_ISSUER}
+    access-token-expire-seconds: ${MPFM_ACCESS_TOKEN_EXPIRE_SECONDS}
+    refresh-token-expire-seconds: ${MPFM_REFRESH_TOKEN_EXPIRE_SECONDS}
+    signing-key: ${MPFM_JWT_SIGNING_KEY}
+
+mpfm:
+  audit:
+    enabled: ${MPFM_AUDIT_ENABLED:true}
+  webdav:
+    enabled: ${MPFM_WEBDAV_ENABLED:true}
+    root-path: ${MPFM_WEBDAV_ROOT_PATH:/dav}
+  local:
+    base-path: ${MPFM_LOCAL_BASE_PATH:./data/local}
+  avatar:
+    base-path: ${MPFM_AVATAR_BASE_PATH:./data/avatars}
+    signing-key: ${MPFM_AVATAR_SIGNING_KEY:mpfm_avatar_signing_key_change_me_please}
+    signed-url-expire-seconds: ${MPFM_AVATAR_SIGNED_URL_EXPIRE_SECONDS:300}
+  sftp:
+    hostkey:
+      mode: ${MPFM_SFTP_HOSTKEY_MODE:insecure}
+      known-hosts-path: ${MPFM_SFTP_KNOWN_HOSTS_PATH:}
+      pinned-fingerprint: ${MPFM_SFTP_PINNED_FINGERPRINT:}
+  sql-observability:
+    enabled: ${MPFM_SQL_OBSERVABILITY_ENABLED:true}
+    slow-info-ms: ${MPFM_SQL_SLOW_INFO_MS:150}
+    slow-warn-ms: ${MPFM_SQL_SLOW_WARN_MS:400}
+    slow-error-ms: ${MPFM_SQL_SLOW_ERROR_MS:1000}
+    request-info-sql-count: ${MPFM_SQL_REQUEST_INFO_COUNT:8}
+    request-warn-sql-count: ${MPFM_SQL_REQUEST_WARN_COUNT:40}
+    request-error-sql-count: ${MPFM_SQL_REQUEST_ERROR_COUNT:120}
+
+logging:
+  level:
+    root: ${MPFM_LOG_LEVEL_ROOT:INFO}
+    org.springframework.security: ${MPFM_LOG_LEVEL_SECURITY:INFO}
+    org.hibernate.SQL: ${MPFM_LOG_LEVEL_HIBERNATE_SQL:WARN}
+    org.hibernate.orm.jdbc.bind: ${MPFM_LOG_LEVEL_HIBERNATE_BIND:WARN}

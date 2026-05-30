@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: mpfm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MPFM_DB_NAME}
+      POSTGRES_USER: ${MPFM_DB_USERNAME}
+      POSTGRES_PASSWORD: ${MPFM_DB_PASSWORD}
+    ports:
+      - "${MPFM_DB_PORT}:5432"
+    volumes:
+      - mpfm_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MPFM_DB_USERNAME} -d ${MPFM_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mpfm-redis
+    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - |
+        if [ -n "${MPFM_REDIS_PASSWORD}" ]; then
+          exec redis-server --appendonly yes --requirepass "${MPFM_REDIS_PASSWORD}";
+        else
+          exec redis-server --appendonly yes;
+        fi
+    ports:
+      - "${MPFM_REDIS_PORT}:6379"
+    volumes:
+      - mpfm_redis_data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          if [ -n "${MPFM_REDIS_PASSWORD}" ]; then
+            redis-cli -a "${MPFM_REDIS_PASSWORD}" ping;
+          else
+            redis-cli ping;
+          fi
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mpfm_postgres_data:
+  mpfm_redis_data:
