@@ -18,7 +18,7 @@ import org.apache.sshd.sftp.client.SftpClient;
 import org.springframework.stereotype.Component;
 
 /**
- * SFTP 协议驱动骨架：方法语义与 OpenList SFTP Driver 对齐。
+ * SFTP 协议驱动骨架。
  */
 @Component
 public class SftpDriver implements StorageDriver {

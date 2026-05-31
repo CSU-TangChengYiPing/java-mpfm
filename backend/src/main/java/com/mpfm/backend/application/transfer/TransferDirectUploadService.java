@@ -72,7 +72,7 @@ public class TransferDirectUploadService {
         String protocol = resolved.mount().getType();
         StorageDriver driver = driverFactory.resolve(protocol);
         DriverCapabilitySnapshot snapshot = DriverCapabilitySnapshot.from(protocol, driver.capability());
-        // 对齐 OpenList：上传可用性由 Put 能力决定；directUpload 仅表示是否支持直传票据。
+        // 上传可用性由 Put 能力决定；directUpload 仅表示是否支持直传票据。
         boolean uploadAvailable = snapshot.put();
         long maxPartSizeBytes = snapshot.directUpload() ? MAX_CHUNK_SIZE : 0L;
         long suggestedChunkSizeBytes = snapshot.directUpload() ? DEFAULT_DIRECT_CHUNK_SIZE : 0L;

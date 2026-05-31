@@ -53,14 +53,14 @@ public class TransferBandwidthLimiter {
     }
 
     /**
-     * OpenList 同款语义：在读取请求体字节时等待令牌，不抛出“超限失败”。
+     * 在读取请求体字节时等待令牌，不抛出“超限失败”。
      */
     public void awaitUploadPermit(String username, long bytes) {
         await(username, DIRECTION_UPLOAD, bytes);
     }
 
     /**
-     * OpenList 同款语义：在读取响应体字节时等待令牌，不抛出“超限失败”。
+     * 在读取响应体字节时等待令牌，不抛出“超限失败”。
      */
     public void awaitDownloadPermit(String username, long bytes) {
         await(username, DIRECTION_DOWNLOAD, bytes);

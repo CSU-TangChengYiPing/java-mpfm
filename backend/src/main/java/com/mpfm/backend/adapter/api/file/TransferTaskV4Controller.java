@@ -161,7 +161,7 @@ public class TransferTaskV4Controller {
         void run(UUID taskId);
     }
 
-    /** v4 任务公开视图：对齐 OpenList 任务页语义，屏蔽后端内部字段。 */
+    /** v4 任务公开视图，屏蔽后端内部字段。 */
     public record TaskView(String id, String name, String creator, String taskGroup, String state, String status,
                            double progress, String startTime, String endTime, long totalBytes, String error) {
         static TaskView from(AsyncTask task) {

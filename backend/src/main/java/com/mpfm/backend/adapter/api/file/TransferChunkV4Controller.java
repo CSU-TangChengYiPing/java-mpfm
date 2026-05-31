@@ -237,7 +237,7 @@ public class TransferChunkV4Controller {
         return UploadSessionResponse.from(transferChunkService.getUploadSession(principal.getName(), uploadId));
     }
 
-    /** v4 直链下载入口：默认跳转到代理下载，实现与 OpenList /d -> /p 的同款入口语义。 */
+    /** v4 直链下载入口：默认跳转到代理下载 */
     @GetMapping("/downloads/direct")
     public ResponseEntity<Void> downloadDirect(@RequestParam String virtualPath) {
         String encoded = URLEncoder.encode(virtualPath, StandardCharsets.UTF_8);

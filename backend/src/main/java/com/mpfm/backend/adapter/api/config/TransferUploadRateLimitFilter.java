@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * 上传入口限速过滤器：按 OpenList 的请求体读取整形语义，在 read() 时执行 WaitN。
+ * 上传入口限速过滤器：在 read() 时执行 WaitN。
  */
 @Component
 public class TransferUploadRateLimitFilter extends OncePerRequestFilter {

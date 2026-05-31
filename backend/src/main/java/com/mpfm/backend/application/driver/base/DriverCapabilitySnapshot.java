@@ -1,7 +1,7 @@
 package com.mpfm.backend.application.driver.base;
 
 /**
- * 驱动能力快照：统一承载 OpenList 风格的协议能力与传输策略语义。
+ * 驱动能力快照：统一承载驱动能力与协议画像。
  */
 public record DriverCapabilitySnapshot(
         String protocol,
@@ -40,7 +40,7 @@ public record DriverCapabilitySnapshot(
         );
     }
 
-    /** 协议能力画像：对齐 OpenList `meta.go` 的代理策略字段。 */
+    /** 协议能力画像。 */
     private record ProtocolCapabilityProfile(boolean onlyProxy, boolean noLinkUrl, boolean preferProxy) {
         static ProtocolCapabilityProfile fromProtocol(String protocol) {
             if ("local".equalsIgnoreCase(protocol) || "sftp".equalsIgnoreCase(protocol)) {

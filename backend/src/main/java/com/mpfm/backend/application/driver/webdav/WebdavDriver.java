@@ -12,7 +12,7 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 /**
- * WebDAV 协议驱动：与 OpenList 同语义提供目录与文件操作。
+ * WebDAV 协议驱动骨架。
  */
 @Component
 public class WebdavDriver implements StorageDriver {
