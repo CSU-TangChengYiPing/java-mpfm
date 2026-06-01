@@ -468,6 +468,51 @@ export default class MountsController {
     });
   }
 
+  static async updateRoleTemplateV5(payload: {
+    templateId: string;
+    name: string;
+    defaultVisible: boolean;
+    defaultRead: boolean;
+    defaultWrite: boolean;
+  }): Promise<ShareRoleTemplate> {
+    const resp = await request(`/api/v5/role-templates/${encodeURIComponent(payload.templateId)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "If-Match": "\"m-7\"" },
+      body: JSON.stringify({
+        name: payload.name,
+        defaultVisible: payload.defaultVisible,
+        defaultRead: payload.defaultRead,
+        defaultWrite: payload.defaultWrite,
+      }),
+    });
+    const row = (await resp.json()) as {
+      templateId: string;
+      mountId: string;
+      roleId: string;
+      name: string;
+      state: string;
+      defaultVisible: boolean;
+      defaultRead: boolean;
+      defaultWrite: boolean;
+    };
+    const permissions: string[] = [];
+    if (row.defaultVisible) permissions.push("visible");
+    if (row.defaultRead) permissions.push("read");
+    if (row.defaultWrite) permissions.push("write");
+    return {
+      id: row.roleId,
+      templateId: row.templateId,
+      roleId: row.roleId,
+      mountId: row.mountId,
+      name: row.name,
+      permissions,
+      defaultVisible: row.defaultVisible,
+      defaultRead: row.defaultRead,
+      defaultWrite: row.defaultWrite,
+      builtin: ["owner", "visitor", "collaborator"].includes((row.name || "").trim().toLowerCase()),
+    };
+  }
+
   static async listRoleTemplatePrivilegesV5(templateId: string): Promise<ShareTemplatePrivilegeInfo[]> {
     const resp = await request(`/api/v5/role-templates/${encodeURIComponent(templateId)}/privileges`);
     return asList<ShareTemplatePrivilegeInfo>(await resp.json());

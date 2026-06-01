@@ -2,6 +2,7 @@ package com.mpfm.backend.adapter.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -13,6 +14,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebAsyncSecurityConfig implements WebMvcConfigurer {
+    private final long mvcAsyncTimeoutMs;
+
+    public WebAsyncSecurityConfig(@Value("${mpfm.web.async-timeout-ms:1800000}") long mvcAsyncTimeoutMs) {
+        this.mvcAsyncTimeoutMs = mvcAsyncTimeoutMs;
+    }
 
     @Bean(name = "mvcAsyncTaskExecutor")
     public AsyncTaskExecutor mvcAsyncTaskExecutor() {
@@ -28,6 +34,7 @@ public class WebAsyncSecurityConfig implements WebMvcConfigurer {
     @Override
     public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
         configurer.setTaskExecutor(mvcAsyncTaskExecutor());
+        configurer.setDefaultTimeout(mvcAsyncTimeoutMs);
     }
 }
 

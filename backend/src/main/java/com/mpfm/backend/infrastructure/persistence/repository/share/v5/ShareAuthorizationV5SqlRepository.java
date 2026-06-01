@@ -65,9 +65,9 @@ public class ShareAuthorizationV5SqlRepository {
                   JOIN share_role_templates_v5 t
                     ON t.id = ?
                    AND t.state = 'active'
-                  LEFT JOIN share_role_template_privileges_v5 p
+                LEFT JOIN share_role_template_privileges_v5 p
                     ON p.template_id = t.id
-                   AND p.target_path = n.node_path
+                   AND ltrim(p.target_path, '/') = ltrim(n.node_path, '/')
                 )
                 SELECT
                   raw_path,
@@ -157,9 +157,9 @@ public class ShareAuthorizationV5SqlRepository {
                     COALESCE(p.allow_write, at.default_write) AS can_write
                   FROM ancestor_nodes n
                   JOIN active_templates at ON TRUE
-                  LEFT JOIN share_role_template_privileges_v5 p
+                LEFT JOIN share_role_template_privileges_v5 p
                     ON p.template_id = at.template_id
-                   AND p.target_path = n.node_path
+                   AND ltrim(p.target_path, '/') = ltrim(n.node_path, '/')
                 ),
                 node_union AS (
                   SELECT

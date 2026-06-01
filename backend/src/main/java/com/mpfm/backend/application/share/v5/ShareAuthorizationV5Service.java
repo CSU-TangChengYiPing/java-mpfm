@@ -177,6 +177,38 @@ public class ShareAuthorizationV5Service {
     }
 
     @Transactional
+    public RoleTemplateResult updateRoleTemplate(String operator, UUID templateId, String name,
+                                                 boolean defaultVisible, boolean defaultRead, boolean defaultWrite) {
+        UserEntity op = requireUser(operator);
+        ShareRoleTemplateV5Entity template = shareRoleTemplateV5Repository.findById(templateId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "template not found"));
+        requireOwnerOrAdminMount(op, template.getMountId());
+        ShareRoleEntity role = requireRole(template.getRoleId());
+        if (role.isSystem()) {
+            throw new BusinessException(ErrorCode.OWNER_IMMUTABLE, "system template immutable");
+        }
+        String normalizedName = normalizeTemplateName(name);
+        shareRoleTemplateV5Repository.findByMountIdAndName(template.getMountId(), normalizedName).ifPresent(existing -> {
+            if (!existing.getId().equals(template.getId())) {
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR, "template name duplicated");
+            }
+        });
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        role.setName(normalizedName);
+        role.setUpdatedAt(now);
+        shareRoleRepository.save(role);
+
+        template.setName(normalizedName);
+        template.setDefaultVisible(defaultVisible);
+        template.setDefaultRead(defaultRead);
+        template.setDefaultWrite(defaultWrite);
+        template.setVersion(template.getVersion() + 1);
+        template.setUpdatedAt(now);
+        shareRoleTemplateV5Repository.save(template);
+        return toTemplateResult(template);
+    }
+
+    @Transactional
     public RoleTemplateResult deleteRoleTemplate(String operator, UUID templateId) {
         UserEntity op = requireUser(operator);
         ShareRoleTemplateV5Entity template = shareRoleTemplateV5Repository.findById(templateId)

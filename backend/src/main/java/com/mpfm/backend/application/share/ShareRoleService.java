@@ -66,10 +66,25 @@ class ShareRoleService {
         ShareRoleEntity role = support.requireRole(roleId);
         support.requireOwnedOrAdminMount(op, role.getMountId());
         assertRoleMutable(role);
-        role.setName(name);
+        String normalizedName = name == null ? "" : name.trim();
+        if (normalizedName.isBlank()) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "role name required");
+        }
+        repositories.shareRoleRepository.findByMountIdAndName(role.getMountId(), normalizedName).ifPresent(existing -> {
+            if (!existing.getId().equals(role.getId())) {
+                throw new BusinessException(ErrorCode.CONFLICT, "role exists");
+            }
+        });
+        role.setName(normalizedName);
         role.setRoleExpiresAt(roleExpiresAt);
         role.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         repositories.shareRoleRepository.save(role);
+        repositories.shareRoleTemplateV5Repository.findByRoleId(role.getId()).ifPresent(template -> {
+            template.setName(normalizedName);
+            template.setVersion(template.getVersion() + 1);
+            template.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+            repositories.shareRoleTemplateV5Repository.save(template);
+        });
         return ShareApplicationService.toRole(role);
     }
 

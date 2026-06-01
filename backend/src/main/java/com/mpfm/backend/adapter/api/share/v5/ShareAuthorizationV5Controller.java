@@ -126,6 +126,16 @@ public class ShareAuthorizationV5Controller {
                 principal.getName(), mountId, req.name(), req.defaultVisible(), req.defaultRead(), req.defaultWrite()));
     }
 
+    @PutMapping("/role-templates/{templateId}")
+    public ShareAuthorizationV5ApiModels.RoleTemplateResponse updateRoleTemplate(@PathVariable UUID templateId,
+                                                                                  @RequestBody ShareAuthorizationV5ApiModels.UpdateRoleTemplateRequest req,
+                                                                                  @RequestHeader(value = IF_MATCH, required = false) String ifMatch,
+                                                                                  Principal principal) {
+        requireIfMatch(ifMatch);
+        return ShareAuthorizationV5ApiModels.RoleTemplateResponse.from(service.updateRoleTemplate(
+                principal.getName(), templateId, req.name(), req.defaultVisible(), req.defaultRead(), req.defaultWrite()));
+    }
+
     @DeleteMapping("/role-templates/{templateId}")
     public ShareAuthorizationV5ApiModels.RoleTemplateResponse deleteRoleTemplate(@PathVariable UUID templateId,
                                                                                   @RequestHeader(value = IF_MATCH, required = false) String ifMatch,
@@ -253,23 +263,47 @@ public class ShareAuthorizationV5Controller {
         while (normalized.contains("//")) {
             normalized = normalized.replace("//", "/");
         }
+        while (normalized.contains("/./")) {
+            normalized = normalized.replace("/./", "/");
+        }
+        if (normalized.startsWith("./")) {
+            normalized = normalized.substring(1);
+        }
+        if (!normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+        String[] parts = normalized.split("/");
+        int scopeIndex = -1;
+        for (int i = 1; i < parts.length; i += 1) {
+            if ("personal".equals(parts[i]) || "shared".equals(parts[i])) {
+                scopeIndex = i;
+                break;
+            }
+        }
+        if (scopeIndex >= 0) {
+            StringBuilder relative = new StringBuilder("/");
+            for (int i = scopeIndex + 2; i < parts.length; i += 1) {
+                if (parts[i] == null || parts[i].isBlank() || ".".equals(parts[i])) {
+                    continue;
+                }
+                if (relative.length() > 1) {
+                    relative.append("/");
+                }
+                relative.append(parts[i]);
+            }
+            return relative.toString();
+        }
         String token = mountId.toString();
         String prefixA = "/personal/" + token;
-        String prefixB = "personal/" + token;
-        if (normalized.equals(prefixA) || normalized.equals(prefixB) || normalized.equals("./" + prefixB)) {
+        String prefixB = "/shared/" + token;
+        if (normalized.equals(prefixA) || normalized.equals(prefixB)) {
             return "/";
         }
         if (normalized.startsWith(prefixA + "/")) {
             return normalized.substring(prefixA.length());
         }
         if (normalized.startsWith(prefixB + "/")) {
-            return "/" + normalized.substring(prefixB.length() + 1);
-        }
-        if (normalized.startsWith("./" + prefixB + "/")) {
-            return "/" + normalized.substring(prefixB.length() + 3);
-        }
-        if (!normalized.startsWith("/")) {
-            return "/" + normalized;
+            return normalized.substring(prefixB.length());
         }
         return normalized;
     }

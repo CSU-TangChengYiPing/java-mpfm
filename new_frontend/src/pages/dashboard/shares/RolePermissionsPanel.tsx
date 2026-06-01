@@ -11,6 +11,7 @@ import { MdRefresh } from "react-icons/md";
 import { TiArrowBack } from "react-icons/ti";
 import toast from "react-hot-toast";
 import FormModal from "../../../components/common/FormModal";
+import PermissionLevelSelector from "../../../components/common/PermissionLevelSelector";
 import FileTable from "../../../components/file_manage/file_table";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import type { FileInfo } from "../../../controllers/file_manager";
@@ -288,7 +289,7 @@ export default function RolePermissionsPanel(props: {
           <Select disableAnimation className="w-[320px]" label={t("shares.mountLabel")} selectedKeys={p.selectedMountID ? [p.selectedMountID] : []} onSelectionChange={(keys) => p.onMountChange(String(Array.from(keys)[0] ?? ""))}>
             {p.manageableMounts.map((m) => <SelectItem key={m.id}>{`${m.name} (${m.id})`}</SelectItem>)}
           </Select>
-          <Select disableAnimation className="w-[240px]" label={t("shares.targetRoleLabel")} selectedKeys={[p.grantRole]} onSelectionChange={(keys) => p.onGrantRoleChange(String(Array.from(keys)[0]))}>
+          <Select disableAnimation className="w-[240px]" label={t("shares.targetRoleLabel")} selectedKeys={p.grantRole ? [p.grantRole] : []} onSelectionChange={(keys) => p.onGrantRoleChange(String(Array.from(keys)[0] ?? ""))}>
             {p.presetRoleList.map((r) => <SelectItem key={r}>{`${p.roleNameMap.get(r) || r} (ID:${r})`}</SelectItem>)}
           </Select>
         </div>
@@ -567,41 +568,7 @@ export default function RolePermissionsPanel(props: {
             </Button>
           </div>
         )}
-        <div className="space-y-2">
-          <div className="text-xs text-default-500">权限等级</div>
-          <div className="relative px-2 pt-3 pb-8">
-            <div className="absolute left-2 right-2 top-5 h-1 overflow-hidden rounded-full bg-default-200">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-200"
-                style={{ width: `${Math.max(0, Math.min(100, (permCursor / 3) * 100))}%` }}
-              />
-            </div>
-            <div className="absolute left-2 right-2 top-5 z-10 flex -translate-y-1/2 items-center justify-between">
-              {[0, 1, 2, 3].map((lv) => (
-                <button
-                  key={lv}
-                  type="button"
-                  onClick={() => setPermCursor(lv)}
-                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
-                    Math.floor(permCursor) >= lv ? "border-blue-800 bg-primary" : "border-default-400 bg-default-200"
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="absolute left-2 right-2 top-8 flex items-center justify-between text-[11px] text-default-500">
-              {(["none", "visible", "read", "write"] as const).map((label, idx) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setPermCursor(idx)}
-                  className={Math.floor(permCursor) >= idx ? "text-primary font-semibold" : ""}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <PermissionLevelSelector level={Math.max(0, Math.min(3, Math.floor(permCursor))) as 0 | 1 | 2 | 3} onChange={(level) => setPermCursor(level)} />
       </FormModal>
     </>
   );

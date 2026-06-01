@@ -488,6 +488,69 @@ class ShareFlowIntegrationTests {
                 .andExpect(jsonPath("$.canWrite").value(false));
     }
 
+    @Test
+    void sharedListShouldApplyCollaboratorTemplatePrivilegeOverride() throws Exception {
+        String owner = "owner_" + UUID.randomUUID().toString().substring(0, 6);
+        String guest = "guest_" + UUID.randomUUID().toString().substring(0, 6);
+        register(owner, "Owner");
+        register(guest, "Guest");
+        String ownerToken = login(owner);
+        String guestToken = login(guest);
+
+        String mountName = "shared-override-" + UUID.randomUUID().toString().substring(0, 4);
+        String mountId = createMount(ownerToken, mountName);
+        String ownerDocsPath = "/personal/%s/docs".formatted(mountId);
+        mockMvc.perform(post("/api/v1/files/mkdir")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .header("If-Match", "*")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"virtualPath\":\"%s\"}".formatted(ownerDocsPath)))
+                .andExpect(status().isOk());
+
+        MvcResult roleTemplatesResult = mockMvc.perform(get("/api/v5/mounts/" + mountId + "/role-templates")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andReturn();
+        String roleTemplatesJson = roleTemplatesResult.getResponse().getContentAsString();
+        String collaboratorTemplateId = ((List<String>) JsonPath.read(roleTemplatesJson, "$[?(@.name=='collaborator')].templateId")).getFirst();
+        String collaboratorRoleId = ((List<String>) JsonPath.read(roleTemplatesJson, "$[?(@.name=='collaborator')].roleId")).getFirst();
+
+        mockMvc.perform(put("/api/v5/role-templates/" + collaboratorTemplateId + "/privileges/batch")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .header("If-Match", "\"m-7\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "targetPaths":["/docs"],
+                                  "allowVisible":true,
+                                  "allowRead":true,
+                                  "allowWrite":false
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        String linkToken = JsonPath.read(mockMvc.perform(post("/api/v5/mounts/" + mountId + "/share-links")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .header("If-Match", "\"m-7\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"roleId\":\"%s\",\"maxUses\":10}".formatted(collaboratorRoleId)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(), "$.token");
+        mockMvc.perform(post("/api/v5/share-links/resolve")
+                        .header("Authorization", "Bearer " + guestToken)
+                        .header("If-Match", "\"m-7\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"%s\"}".formatted(linkToken)))
+                .andExpect(status().isOk());
+
+        String sharedRootPath = "/shared/%s---%s".formatted(mountName, owner);
+        mockMvc.perform(get("/api/v1/files/list")
+                        .header("Authorization", "Bearer " + guestToken)
+                        .param("virtualPath", sharedRootPath))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.name=='docs')].writable").value(false));
+    }
+
     private void register(String username, String displayName) throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

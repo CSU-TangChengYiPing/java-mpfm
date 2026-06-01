@@ -16,6 +16,8 @@ public class ShareAuthorizationV5ApiModels {
     public record ResolveLinkRequest(String token) { }
     /** 创建角色模板请求。 */
     public record CreateRoleTemplateRequest(String name, boolean defaultVisible, boolean defaultRead, boolean defaultWrite) { }
+    /** 更新角色模板请求。 */
+    public record UpdateRoleTemplateRequest(String name, boolean defaultVisible, boolean defaultRead, boolean defaultWrite) { }
     /** 特权更新请求。 */
     public record UpsertRoleTemplatePrivilegeRequest(String targetPath, boolean allowVisible, boolean allowRead, boolean allowWrite) { }
     /** 特权批量更新请求。 */

@@ -1,5 +1,4 @@
 import { Button } from "@heroui/button";
-import { Checkbox } from "@heroui/checkbox";
 import { Select, SelectItem } from "@heroui/select";
 import { TableCell, TableColumn, TableRow } from "@heroui/table";
 import { FiBookOpen, FiEdit2, FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
@@ -8,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import FormModal from "../../../components/common/FormModal";
 import PaginatedTableShell from "../../../components/common/PaginatedTableShell";
 import { LargeGlassInput } from "../../../components/common/LargeGlassField";
+import PermissionLevelSelector from "../../../components/common/PermissionLevelSelector";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import type { MountInfo, ShareRoleTemplate } from "../../../controllers/mounts";
 
@@ -30,6 +30,22 @@ function toPerms(state: PermState): string[] {
   if (state.read) out.push("read");
   if (state.write) out.push("write");
   return out;
+}
+
+function toPermLevel(state: PermState): number {
+  if (state.write) return 3;
+  if (state.read) return 2;
+  if (state.visible) return 1;
+  return 0;
+}
+
+function fromPermLevel(level: number): PermState {
+  const cursor = Math.max(0, Math.min(3, Math.floor(level)));
+  return {
+    visible: cursor >= 1,
+    read: cursor >= 2,
+    write: cursor >= 3,
+  };
 }
 
 /** 角色模板面板：管理共享角色模板的新增、编辑与删除。 */
@@ -144,11 +160,7 @@ export default function RoleTemplatesPanel({
       >
         <LargeGlassInput label={t("shares.roleIdLabel")} value={newRoleID} onValueChange={setNewRoleID} commitMode="blur" />
         <LargeGlassInput label={t("shares.roleNameLabel")} value={newRoleName} onValueChange={setNewRoleName} commitMode="blur" />
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <Checkbox isSelected={createPerm.visible} onValueChange={(v) => setCreatePerm((s) => ({ ...s, visible: v }))}>visible</Checkbox>
-          <Checkbox isSelected={createPerm.read} onValueChange={(v) => setCreatePerm((s) => ({ ...s, read: v }))}>read</Checkbox>
-          <Checkbox isSelected={createPerm.write} onValueChange={(v) => setCreatePerm((s) => ({ ...s, write: v }))}>write</Checkbox>
-        </div>
+        <PermissionLevelSelector level={toPermLevel(createPerm) as 0 | 1 | 2 | 3} onChange={(level) => setCreatePerm(fromPermLevel(level))} />
       </FormModal>
 
       <FormModal
@@ -162,11 +174,7 @@ export default function RoleTemplatesPanel({
         submitText={t("common.save")}
       >
         <LargeGlassInput label={t("shares.roleNameLabel")} value={editRoleName} onValueChange={setEditRoleName} commitMode="blur" />
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <Checkbox isSelected={editPerm.visible} onValueChange={(v) => setEditPerm((s) => ({ ...s, visible: v }))}>visible</Checkbox>
-          <Checkbox isSelected={editPerm.read} onValueChange={(v) => setEditPerm((s) => ({ ...s, read: v }))}>read</Checkbox>
-          <Checkbox isSelected={editPerm.write} onValueChange={(v) => setEditPerm((s) => ({ ...s, write: v }))}>write</Checkbox>
-        </div>
+        <PermissionLevelSelector level={toPermLevel(editPerm) as 0 | 1 | 2 | 3} onChange={(level) => setEditPerm(fromPermLevel(level))} />
       </FormModal>
     </>
   );
