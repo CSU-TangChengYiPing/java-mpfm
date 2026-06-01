@@ -11,6 +11,7 @@ import { PhotoSlider } from "react-photo-view";
 import i18n from "../../i18n";
 import FileIcon from "../common/file_icon";
 import FileManager, { type FileInfo } from "../../controllers/file_manager";
+import { reportTransferSample } from "../../utils/transferRateMeter";
 import { supportedPreviewExts } from "./preview_types";
 import ImageNameButton, { type PreviewImage, imageExts } from "./image_name_button";
 import PaginatedTableShell from "../common/PaginatedTableShell";
@@ -124,6 +125,7 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
   const lowPriorityQueueRef = useRef<string[]>([]);
   const lowPriorityWorkerRunningRef = useRef(false);
   const objectUrlMapRef = useRef<Record<string, string>>({});
+  const previewTrafficBytesRef = useRef(0);
 
   const selectedSet: Set<string | number> = selectedFiles === "all" ? new Set(files.map((file) => file.name)) : selectedFiles;
   const allSelected = files.length > 0 && (selectedFiles === "all" || (selectedFiles instanceof Set && selectedFiles.size === files.length));
@@ -175,6 +177,8 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
 
       if (!resp.body) {
         const blob = await resp.blob();
+        previewTrafficBytesRef.current += Math.max(0, blob.size);
+        reportTransferSample("download", previewTrafficBytesRef.current);
         const objectURL = window.URL.createObjectURL(blob);
         objectUrlMapRef.current[src] = objectURL;
         setResolvedImageSrcMap((prev) => ({ ...prev, [src]: objectURL }));
@@ -191,6 +195,8 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
         if (value) {
           chunks.push(value);
           loaded += value.length;
+          previewTrafficBytesRef.current += Math.max(0, value.length);
+          reportTransferSample("download", previewTrafficBytesRef.current);
           setImageLoadedBytesMap((prev) => ({ ...prev, [src]: loaded }));
           if (priority === "low") await sleep(25);
         }
