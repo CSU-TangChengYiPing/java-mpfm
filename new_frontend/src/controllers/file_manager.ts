@@ -222,6 +222,26 @@ function readAuthHeaderFromStorage(): string | null {
   }
 }
 
+/**
+ * 下载中心历史缓存按账号隔离：优先 userId，其次 username；两者缺失时回退到匿名键。
+ * 仅用于前端本地历史任务展示，不参与后端鉴权判断。
+ */
+function resolveDownloadHistoryStorageKey(): string {
+  if (typeof localStorage === "undefined") return `${LOCAL_DOWNLOAD_HISTORY_KEY}:anonymous`;
+  const raw = localStorage.getItem(AUTH_KEY);
+  if (!raw) return `${LOCAL_DOWNLOAD_HISTORY_KEY}:anonymous`;
+  try {
+    const parsed = JSON.parse(raw) as { userId?: string; user_id?: string; username?: string };
+    const userId = (parsed.userId || parsed.user_id || "").trim();
+    if (userId) return `${LOCAL_DOWNLOAD_HISTORY_KEY}:${userId}`;
+    const username = (parsed.username || "").trim();
+    if (username) return `${LOCAL_DOWNLOAD_HISTORY_KEY}:${username}`;
+  } catch {
+    // 忽略异常并回退匿名键，避免脏数据阻断下载中心读写
+  }
+  return `${LOCAL_DOWNLOAD_HISTORY_KEY}:anonymous`;
+}
+
 function withAuthHeader(headers: HeadersInit = {}): Headers {
   const merged = new Headers(headers);
   const auth = readAuthHeaderFromStorage();
@@ -950,7 +970,7 @@ export default class FileManager {
       .sort((a, b) => Date.parse(b.updatedAt || "") - Date.parse(a.updatedAt || ""))
       .slice(0, 200);
     try {
-      localStorage.setItem(LOCAL_DOWNLOAD_HISTORY_KEY, JSON.stringify(items));
+      localStorage.setItem(resolveDownloadHistoryStorageKey(), JSON.stringify(items));
     } catch {
       // ignore quota or serialization errors
     }
@@ -967,7 +987,7 @@ export default class FileManager {
     if (this.localDownloadHistoryLoaded) return;
     this.localDownloadHistoryLoaded = true;
     if (typeof localStorage === "undefined") return;
-    const raw = localStorage.getItem(LOCAL_DOWNLOAD_HISTORY_KEY);
+    const raw = localStorage.getItem(resolveDownloadHistoryStorageKey());
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as TaskInfo[];
