@@ -1,11 +1,13 @@
 package com.mpfm.backend.common.persistence;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * SQL 可观测配置：定义慢查询阈值与请求级 SQL 计数阈值。
  */
 @ConfigurationProperties(prefix = "mpfm.sql-observability")
+@Component
 public class SqlObservabilityProperties {
     private boolean enabled = true;
     private long slowInfoMs = 150L;

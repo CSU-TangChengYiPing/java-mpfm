@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -21,8 +22,8 @@ public class SqlRequestMetricsFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(SqlRequestMetricsFilter.class);
     private final SqlObservabilityProperties properties;
 
-    public SqlRequestMetricsFilter(SqlObservabilityProperties properties) {
-        this.properties = properties;
+    public SqlRequestMetricsFilter(ObjectProvider<SqlObservabilityProperties> propertiesProvider) {
+        this.properties = propertiesProvider.getIfAvailable(SqlObservabilityProperties::new);
     }
 
     @Override
