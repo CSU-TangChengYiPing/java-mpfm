@@ -61,7 +61,6 @@ class TransferChunkV4ControllerTests {
         TransferChunkV4Controller controller = newController();
         Principal principal = () -> "alice";
         MockHttpServletRequest request = new MockHttpServletRequest();
-        when(mount.getType()).thenReturn("webdav");
         when(namespaceResolver.resolve("alice", "/personal/mount-a/demo.mp4", false, true))
                 .thenReturn(new NamespaceResolver.ResolveResult(mount, "demo.mp4", "/personal/mount-a/demo.mp4", false, true));
         when(fileApplicationService.stat("alice", "/personal/mount-a/demo.mp4"))

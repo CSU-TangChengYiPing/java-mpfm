@@ -8,6 +8,7 @@ import com.mpfm.backend.infrastructure.persistence.entity.UserEntity;
 import com.mpfm.backend.infrastructure.persistence.entity.share.ShareLinkEntity;
 import com.mpfm.backend.infrastructure.persistence.entity.share.ShareRoleEntity;
 import com.mpfm.backend.infrastructure.persistence.entity.share.SharedMountAccessEntity;
+import com.mpfm.backend.infrastructure.persistence.entity.share.v5.SharedMountAccessV5Entity;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -123,6 +124,7 @@ class ShareLinkService {
             all.add(access);
         }
         repositories.sharedMountAccessRepository.saveAll(all);
+        syncV5Accesses(user, link.getMountId(), all);
 
         link.setUsedCount(link.getUsedCount() + 1);
         link.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
@@ -140,7 +142,52 @@ class ShareLinkService {
             access.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         }
         repositories.sharedMountAccessRepository.saveAll(accesses);
+        syncV5Accesses(user, mountId, accesses);
         return new ShareApplicationService.ResolveResult(mountId, roleId, "active", null);
+    }
+
+    private void syncV5Accesses(UserEntity user, UUID mountId, List<SharedMountAccessEntity> accesses) {
+        List<SharedMountAccessV5Entity> legacyMapped = accesses.stream()
+                .map(this::toV5Access)
+                .toList();
+        List<SharedMountAccessV5Entity> existing = repositories.sharedMountAccessV5Repository.findByUserIdAndMountId(user.getId(), mountId);
+        for (SharedMountAccessV5Entity row : existing) {
+            boolean stillGranted = legacyMapped.stream().anyMatch(item -> item.getRoleId().equals(row.getRoleId()));
+            if (!stillGranted) {
+                row.setActive(false);
+                row.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+            }
+        }
+        for (SharedMountAccessV5Entity mapped : legacyMapped) {
+            SharedMountAccessV5Entity target = existing.stream()
+                    .filter(item -> item.getRoleId().equals(mapped.getRoleId()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        existing.add(mapped);
+                        return mapped;
+                    });
+            target.setUserId(mapped.getUserId());
+            target.setMountId(mapped.getMountId());
+            target.setRoleId(mapped.getRoleId());
+            target.setActive(mapped.isActive());
+            target.setGrantedByLinkId(mapped.getGrantedByLinkId());
+            target.setGrantedAt(mapped.getGrantedAt());
+            target.setUpdatedAt(mapped.getUpdatedAt());
+        }
+        repositories.sharedMountAccessV5Repository.saveAll(existing);
+    }
+
+    private SharedMountAccessV5Entity toV5Access(SharedMountAccessEntity source) {
+        SharedMountAccessV5Entity row = new SharedMountAccessV5Entity();
+        row.setId(source.getId());
+        row.setUserId(source.getUserId());
+        row.setMountId(source.getMountId());
+        row.setRoleId(source.getRoleId());
+        row.setActive(source.isActive());
+        row.setGrantedByLinkId(source.getGrantedByLinkId());
+        row.setGrantedAt(source.getGrantedAt());
+        row.setUpdatedAt(source.getUpdatedAt());
+        return row;
     }
 
     private SharedMountAccessEntity createAccess(UserEntity user, ShareLinkEntity link) {

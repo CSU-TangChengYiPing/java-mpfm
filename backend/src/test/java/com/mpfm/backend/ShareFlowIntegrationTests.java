@@ -194,8 +194,8 @@ class ShareFlowIntegrationTests {
 
         String mountName = "share-perm-" + UUID.randomUUID().toString().substring(0, 4);
         String mountId = createMount(ownerToken, mountName);
-        String ownerFilePath = "/personal/%s/docs/readme.txt".formatted(mountId);
-        String sharedFilePath = "/shared/%s/docs/readme.txt".formatted(mountId);
+        String ownerFilePath = "/personal/%s/docs/readme.txt".formatted(mountName);
+        String sharedFilePath = "/shared/%s---%s/docs/readme.txt".formatted(mountName, owner);
 
         mockMvc.perform(put("/api/v1/files/content")
                         .header("Authorization", "Bearer " + ownerToken)
@@ -499,7 +499,7 @@ class ShareFlowIntegrationTests {
 
         String mountName = "shared-override-" + UUID.randomUUID().toString().substring(0, 4);
         String mountId = createMount(ownerToken, mountName);
-        String ownerDocsPath = "/personal/%s/docs".formatted(mountId);
+        String ownerDocsPath = "/personal/%s/docs".formatted(mountName);
         mockMvc.perform(post("/api/v1/files/mkdir")
                         .header("Authorization", "Bearer " + ownerToken)
                         .header("If-Match", "*")
@@ -548,7 +548,7 @@ class ShareFlowIntegrationTests {
                         .header("Authorization", "Bearer " + guestToken)
                         .param("virtualPath", sharedRootPath))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.name=='docs')].writable").value(false));
+                .andExpect(jsonPath("$.items[?(@.name=='docs')].writable").value(false));
     }
 
     private void register(String username, String displayName) throws Exception {

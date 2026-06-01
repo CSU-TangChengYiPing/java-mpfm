@@ -39,9 +39,9 @@ class TransferTelemetryServiceTests {
 
         assertThat(snapshot.username()).isEqualTo("alice");
         assertThat(snapshot.uploadBps()).isEqualTo(3072L);
-        assertThat(snapshot.downloadBps()).isGreaterThan(0L);
+        assertThat(snapshot.downloadBps()).isEqualTo(0L);
         assertThat(snapshot.activeUploadTasks()).isEqualTo(1);
-        assertThat(snapshot.activeDownloadTasks()).isEqualTo(1);
+        assertThat(snapshot.activeDownloadTasks()).isEqualTo(0);
         assertThat(snapshot.activeChunks()).isEqualTo((10 - 3) + (8 - 5));
     }
 

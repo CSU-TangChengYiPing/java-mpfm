@@ -44,11 +44,11 @@ class TransferUploadRuntimeIntegrationTests {
 
         register(username, password);
         String accessToken = loginAndGetAccessToken(username, password);
-        String mountId = createMount(accessToken, mountName, mountRoot);
+        MountRef mount = createMount(accessToken, mountName, mountRoot);
 
         MvcResult uploadResult = mockMvc.perform(post("/api/v4/transfers/uploads/runtime/tasks")
                         .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .header("X-Upload-Virtual-Path", "/personal/" + mountId + "/")
+                        .header("X-Upload-Virtual-Path", "/personal/" + mount.mountId() + "/")
                         .header("X-Upload-Filename", fileName)
                         .header("X-Upload-Size", content.getBytes(StandardCharsets.UTF_8).length)
                         .content(content.getBytes(StandardCharsets.UTF_8))
@@ -56,11 +56,10 @@ class TransferUploadRuntimeIntegrationTests {
                 .andExpect(status().isOk())
                 .andReturn();
         String uploadJson = uploadResult.getResponse().getContentAsString();
-        String taskId = JsonPath.read(uploadJson, "$.taskId");
+        String uploadId = JsonPath.read(uploadJson, "$.uploadId");
+        waitTaskToSuccess(accessToken, uploadId, Duration.ofSeconds(8));
 
-        waitTaskToSuccess(accessToken, taskId, Duration.ofSeconds(8));
-
-        Path targetFile = mountRoot.resolve(fileName).normalize();
+        Path targetFile = Path.of(mount.root()).resolve(fileName).normalize();
         assertThat(Files.exists(targetFile)).isTrue();
         assertThat(Files.readString(targetFile, StandardCharsets.UTF_8)).isEqualTo(content);
     }
@@ -92,7 +91,7 @@ class TransferUploadRuntimeIntegrationTests {
         return JsonPath.read(loginResult.getResponse().getContentAsString(), "$.token.accessToken");
     }
 
-    private String createMount(String accessToken, String mountName, Path mountRoot) throws Exception {
+    private MountRef createMount(String accessToken, String mountName, Path mountRoot) throws Exception {
         MvcResult mountResult = mockMvc.perform(post("/api/v1/mounts")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -107,14 +106,19 @@ class TransferUploadRuntimeIntegrationTests {
                                 """.formatted(mountName, mountRoot.toString().replace("\\", "\\\\"))))
                 .andExpect(status().isOk())
                 .andReturn();
-        return JsonPath.read(mountResult.getResponse().getContentAsString(), "$.mountId");
+        String body = mountResult.getResponse().getContentAsString();
+        return new MountRef(
+                JsonPath.read(body, "$.mountId"),
+                JsonPath.read(body, "$.root"));
     }
+
+    private record MountRef(String mountId, String root) { }
 
     private void waitTaskToSuccess(String accessToken, String taskId, Duration timeout) throws Exception {
         long deadline = System.currentTimeMillis() + timeout.toMillis();
         String lastStatus = "";
         while (System.currentTimeMillis() < deadline) {
-            MvcResult taskResult = mockMvc.perform(get("/api/v4/transfers/tasks/{taskId}", taskId)
+            MvcResult taskResult = mockMvc.perform(get("/api/v4/transfers/uploads/{taskId}", taskId)
                             .header("Authorization", "Bearer " + accessToken))
                     .andExpect(status().isOk())
                     .andReturn();

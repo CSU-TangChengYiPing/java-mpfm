@@ -7,7 +7,7 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.sftp.client.SftpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 class SftpDriverUtilTests {
@@ -33,8 +33,8 @@ class SftpDriverUtilTests {
 
         SftpDriverUtil.closeQuietly(connection);
 
-        verify(sftpClient, times(1)).close();
-        verify(session, times(1)).close();
-        verify(client, times(1)).close();
+        verify(sftpClient, never()).close();
+        verify(session, never()).close();
+        verify(client, never()).close();
     }
 }

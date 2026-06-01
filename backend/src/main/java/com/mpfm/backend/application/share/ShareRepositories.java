@@ -7,6 +7,7 @@ import com.mpfm.backend.infrastructure.persistence.repository.share.ShareLinkRep
 import com.mpfm.backend.infrastructure.persistence.repository.share.ShareRolePolicyRepository;
 import com.mpfm.backend.infrastructure.persistence.repository.share.ShareRoleRepository;
 import com.mpfm.backend.infrastructure.persistence.repository.share.v5.ShareRoleTemplateV5Repository;
+import com.mpfm.backend.infrastructure.persistence.repository.share.v5.SharedMountAccessV5Repository;
 import com.mpfm.backend.infrastructure.persistence.repository.share.SharedMountAccessRepository;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ class ShareRepositories {
     final ShareRolePolicyRepository shareRolePolicyRepository;
     final ShareLinkRepository shareLinkRepository;
     final SharedMountAccessRepository sharedMountAccessRepository;
+    final SharedMountAccessV5Repository sharedMountAccessV5Repository;
     final ShareRoleTemplateV5Repository shareRoleTemplateV5Repository;
     final AuditLogRepository auditLogRepository;
 
@@ -27,6 +29,7 @@ class ShareRepositories {
                       ShareRolePolicyRepository shareRolePolicyRepository,
                       ShareLinkRepository shareLinkRepository,
                       SharedMountAccessRepository sharedMountAccessRepository,
+                      SharedMountAccessV5Repository sharedMountAccessV5Repository,
                       ShareRoleTemplateV5Repository shareRoleTemplateV5Repository,
                       AuditLogRepository auditLogRepository) {
         this.userRepository = userRepository;
@@ -35,6 +38,7 @@ class ShareRepositories {
         this.shareRolePolicyRepository = shareRolePolicyRepository;
         this.shareLinkRepository = shareLinkRepository;
         this.sharedMountAccessRepository = sharedMountAccessRepository;
+        this.sharedMountAccessV5Repository = sharedMountAccessV5Repository;
         this.shareRoleTemplateV5Repository = shareRoleTemplateV5Repository;
         this.auditLogRepository = auditLogRepository;
     }
