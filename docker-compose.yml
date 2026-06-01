@@ -4,15 +4,17 @@ services:
     container_name: mpfm-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${MPFM_DB_NAME}
-      POSTGRES_USER: ${MPFM_DB_USERNAME}
-      POSTGRES_PASSWORD: ${MPFM_DB_PASSWORD}
+      POSTGRES_DB: ${MPFM_DB_NAME:-mpfm}
+      POSTGRES_USER: ${MPFM_DB_USERNAME:-mpfm}
+      POSTGRES_PASSWORD: ${MPFM_DB_PASSWORD:-mpfm_dev_password}
+      MPFM_TEST_DB_NAME: ${MPFM_TEST_DB_NAME:-mpfm_test}
     ports:
-      - "${MPFM_DB_PORT}:5432"
+      - "5432:5432"
     volumes:
       - mpfm_postgres_data:/var/lib/postgresql/data
+      - ./scripts/docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${MPFM_DB_USERNAME} -d ${MPFM_DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${MPFM_DB_USERNAME:-mpfm} -d ${MPFM_DB_NAME:-mpfm}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,7 +33,7 @@ services:
           exec redis-server --appendonly yes;
         fi
     ports:
-      - "${MPFM_REDIS_PORT}:6379"
+      - "${MPFM_REDIS_PORT:-6379}:6379"
     volumes:
       - mpfm_redis_data:/data
     healthcheck:
