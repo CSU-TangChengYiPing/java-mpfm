@@ -16,6 +16,7 @@ import FileTable from "../../../components/file_manage/file_table";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import type { FileInfo } from "../../../controllers/file_manager";
 import type { MountInfo } from "../../../controllers/mounts";
+import { pickSingleSelectKey } from "./selectKey";
 
 type Selection = Set<string | number> | "all";
 type Row = { key: string; role: string; path_scopes?: string[]; permissions?: string[] };
@@ -284,24 +285,32 @@ export default function RolePermissionsPanel(props: {
 
   return (
     <>
-      <div className="rounded-sm border border-white/40 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/40 flex items-end justify-between gap-3">
-        <div className="flex items-end gap-3">
-          <Select disableAnimation className="w-[320px]" label={t("shares.mountLabel")} selectedKeys={p.selectedMountID ? [p.selectedMountID] : []} onSelectionChange={(keys) => p.onMountChange(String(Array.from(keys)[0] ?? ""))}>
-            {p.manageableMounts.map((m) => <SelectItem key={m.id}>{`${m.name} (${m.id})`}</SelectItem>)}
-          </Select>
-          <Select disableAnimation className="w-[240px]" label={t("shares.targetRoleLabel")} selectedKeys={p.grantRole ? [p.grantRole] : []} onSelectionChange={(keys) => p.onGrantRoleChange(String(Array.from(keys)[0] ?? ""))}>
-            {p.presetRoleList.map((r) => <SelectItem key={r}>{`${p.roleNameMap.get(r) || r} (ID:${r})`}</SelectItem>)}
-          </Select>
+      <div className="rounded-sm border border-white/40 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/40">
+        <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-end">
+          <div className="flex w-full items-center gap-2 md:w-[320px]">
+            <span className="w-16 shrink-0 text-xs text-default-600">{t("shares.mountLabel")}</span>
+            <Select disableAnimation size="sm" className="min-w-0 flex-1" classNames={{ trigger: "h-8 min-h-8", value: "text-xs" }} aria-label={t("shares.mountLabel")} selectedKeys={p.selectedMountID ? [p.selectedMountID] : []} onSelectionChange={(keys) => p.onMountChange(pickSingleSelectKey(keys as "all" | Set<string | number>))}>
+              {p.manageableMounts.map((m) => <SelectItem key={m.id}>{`${m.name} (${m.id})`}</SelectItem>)}
+            </Select>
+          </div>
+          <div className="flex w-full items-center gap-2 md:w-[240px]">
+            <span className="w-16 shrink-0 text-xs text-default-600">{t("shares.targetRoleLabel")}</span>
+            <Select disableAnimation size="sm" className="min-w-0 flex-1" classNames={{ trigger: "h-8 min-h-8", value: "text-xs" }} aria-label={t("shares.targetRoleLabel")} selectedKeys={p.grantRole ? [p.grantRole] : []} onSelectionChange={(keys) => p.onGrantRoleChange(pickSingleSelectKey(keys as "all" | Set<string | number>))}>
+              {p.presetRoleList.map((r) => <SelectItem key={r}>{`${p.roleNameMap.get(r) || r} (ID:${r})`}</SelectItem>)}
+            </Select>
+          </div>
         </div>
         <Tabs selectedKey={p.mode} onSelectionChange={(k) => p.onModeChange(String(k) as "edit" | "preview")} size="sm">
           <Tab key="edit" title={t("shares.modeEdit")} />
           <Tab key="preview" title={t("shares.modePreview")} />
         </Tabs>
+        </div>
       </div>
 
       {p.mode === "edit" ? (
         <>
-          <div className="mb-0 flex flex-col md:flex-row items-stretch md:items-center gap-4 sticky top-0 z-0 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10">
+          <div className="mb-0 flex flex-col md:flex-row items-stretch md:items-center gap-4 sticky top-2 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10">
             <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0">
               {canGoParent ? (
                 <ShadowTooltip content={t("shares.goParent")}><Button aria-label={t("shares.goParent")} radius="sm" color="primary" size="sm" isIconOnly variant="flat" onPress={p.onGoParentDir} className="text-lg min-w-8"><TiArrowBack /></Button></ShadowTooltip>
@@ -401,7 +410,7 @@ export default function RolePermissionsPanel(props: {
       <FileTable
         files={p.browseFiles}
         currentPath={p.browsePath}
-        wrapperClassName="h-[calc(100vh-400px)]"
+        wrapperClassName="min-h-[380px]"
         loading={p.loading}
         sortDescriptor={p.sortDescriptor}
         onSortChange={p.onSortChange}
@@ -430,7 +439,7 @@ export default function RolePermissionsPanel(props: {
         </>
       ) : (
         <>
-          <div className="mb-0 flex flex-col md:flex-row items-stretch md:items-center gap-4 sticky top-14 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10">
+          <div className="mb-0 flex flex-col md:flex-row items-stretch md:items-center gap-4 sticky top-2 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10">
             <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0">
               {canGoParent ? (
                 <ShadowTooltip content={t("shares.goParent")}><Button aria-label={t("shares.goParent")} radius="sm" color="primary" size="sm" isIconOnly variant="flat" onPress={p.onGoParentDir} className="text-lg min-w-8"><TiArrowBack /></Button></ShadowTooltip>
@@ -513,7 +522,7 @@ export default function RolePermissionsPanel(props: {
           <FileTable
             files={p.browseFiles}
             currentPath={p.browsePath}
-            wrapperClassName="h-[calc(100vh-400px)]"
+            wrapperClassName="min-h-[380px]"
             loading={p.loading}
             sortDescriptor={p.previewSortDescriptor}
             onSortChange={p.onPreviewSortChange}
@@ -541,6 +550,7 @@ export default function RolePermissionsPanel(props: {
           />
         </>
       )}
+      
       <FormModal
         isOpen={permModalOpen}
         onClose={() => setPermModalOpen(false)}

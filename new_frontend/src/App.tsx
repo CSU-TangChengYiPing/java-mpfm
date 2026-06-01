@@ -17,7 +17,6 @@ const MountsPage = lazy(() => import("./pages/dashboard/storage/mounts"));
 const SharesSharedUsersPage = lazy(() => import("./pages/dashboard/shares/shares_shared_users"));
 const SharesRolesPage = lazy(() => import("./pages/dashboard/shares/shares_roles"));
 const SharesRolePermissionsPage = lazy(() => import("./pages/dashboard/shares/shares_role_permissions"));
-const SharesAuditLogsPage = lazy(() => import("./pages/dashboard/shares/shares_audit_logs"));
 const SharesMyRolesPage = lazy(() => import("./pages/dashboard/shares/shares_my_roles"));
 const UsersPage = lazy(() => import("./pages/dashboard/admin/users"));
 const QosPage = lazy(() => import("./pages/dashboard/ops/qos"));
@@ -67,7 +66,6 @@ export default function App() {
                 <Route path="shares/shared-users" element={<SharesSharedUsersPage />} />
                 <Route path="shares/roles" element={<SharesRolesPage />} />
                 <Route path="shares/role-permissions" element={<SharesRolePermissionsPage />} />
-                <Route path="shares/audit-logs" element={<SharesAuditLogsPage />} />
                 <Route path="shares/my-roles" element={<SharesMyRolesPage />} />
                 <Route path="profile" element={<Navigate to="/app/settings?tab=profile" replace />} />
                 <Route path="profile/search" element={<Navigate to="/app/settings?tab=profile" replace />} />

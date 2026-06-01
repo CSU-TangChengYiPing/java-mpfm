@@ -135,19 +135,15 @@ describe("MountsController", () => {
     expect(links[0]).toMatchObject({ mountId: "m1", roleId: "visitor" });
   });
 
-  it("module3 grants and audits should try restful path then fallback to legacy path", async () => {
+  it("module3 grants should use restful path", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(mockJsonResponse({ items: [{ id: "a1", mount_id: "m1", action: "x", actor: "u", result: "ok", occurred_at: "t" }] }))
       .mockResolvedValueOnce(mockJsonResponse({ items: [{ grantId: "g1", mount_id: "m1", role: "visitor", pathScopes: ["/"], permissions: ["read"] }] }));
 
-    const audits = await MountsController.listShareAudits("m1");
     const grants = await MountsController.listShareGrants("m1");
 
-    expect(audits[0]).toMatchObject({ mountId: "m1" });
     expect(grants[0]).toMatchObject({ id: "g1" });
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/v1/mounts/m1/share-audits", undefined);
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/v1/mounts/m1/share-grants", undefined);
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/v1/mounts/m1/share-grants", undefined);
     expect(grants[0]).toMatchObject({ id: "g1", mountId: "m1", path_scopes: ["/"] });
   });
 

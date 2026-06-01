@@ -27,7 +27,7 @@ function ConfigPageItem({ children, size = "md" }: { children: React.ReactNode; 
   const hasBackground = !!backgroundImage;
   return (
     <Card className={clsx("w-full mx-auto backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-sm rounded-2xl transition-all", hasBackground ? "bg-white/20 dark:bg-black/10" : "bg-white/60 dark:bg-black/40", { "max-w-xl": size === "sm", "max-w-3xl": size === "md", "max-w-6xl": size === "lg" })}>
-      <CardBody className="py-6 px-4 md:py-8 md:px-12">
+      <CardBody className="py-5 px-3 md:py-8 md:px-12">
         <div className="w-full flex flex-col gap-5">{children}</div>
       </CardBody>
     </Card>
@@ -203,18 +203,19 @@ export default function SettingsPage() {
   }
 
   return (
-    <section className="w-full max-w-[1200px] mx-auto py-2 md:py-4 px-1 md:px-3 relative">
+    <section className="w-full max-w-[1200px] mx-auto py-2 md:py-4 px-1 md:px-3 relative overflow-x-hidden">
       <div className="w-full flex flex-col items-center">
-        <Tabs aria-label={t("settings.tabsAriaLabel")} fullWidth={false} disableAnimation={false} className="w-full" selectedKey={tab} onSelectionChange={(k) => navigate(`/app/settings?tab=${String(k)}`)}>
+        <div className="w-full overflow-x-auto">
+        <Tabs aria-label={t("settings.tabsAriaLabel")} fullWidth={false} disableAnimation={false} className="w-full min-w-max" selectedKey={tab} onSelectionChange={(k) => navigate(`/app/settings?tab=${String(k)}`)}>
           <Tab title={t("settings.tabs.profile")} key="profile">
             <ConfigPageItem>
-              {user?.user_id ? <AvatarUploader userID={user.user_id} onUploaded={() => { void refreshUser(); setMessage(t("settings.avatarUpdated")); }} /> : null}
+              {user?.user_id ? <AvatarUploader userID={user.user_id} avatarURL={user.avatarUrl} onUploaded={() => { void refreshUser(); setMessage(t("settings.avatarUpdated")); }} /> : null}
               <LargeGlassInput label={t("settings.profileFields.userId")} value={user?.user_id ?? "-"} isDisabled />
               <LargeGlassInput label={t("settings.profileFields.nickname")} value={nicknameInput} onValueChange={setNicknameDraft} commitMode="blur" />
               <LargeGlassInput label={t("settings.profileFields.email")} value={emailInput} onValueChange={setEmailDraft} commitMode="blur" />
               <LargeGlassInput label={t("settings.profileFields.phone")} value={phoneInput} onValueChange={setPhoneDraft} commitMode="blur" />
               <LargeGlassInput label={t("settings.profileFields.role")} value={user?.role || "-"} isDisabled />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" color="primary" onPress={() => void saveProfile()}>{t("common.save")}</Button>
                 <Button size="sm" variant="flat" onPress={() => { setNicknameDraft(null); setEmailDraft(null); setPhoneDraft(null); }}>{t("common.clear")}</Button>
               </div>
@@ -288,7 +289,7 @@ export default function SettingsPage() {
                 <div className="mb-3 text-sm font-semibold">{t("settings.security.sections.revokeSession")}</div>
                 <div className="space-y-2">
                   {sessions.map((s) => (
-                    <div key={s.sessionId} className="flex items-center gap-2 rounded-lg border border-default-200 p-2">
+                    <div key={s.sessionId} className="flex flex-col items-start gap-2 rounded-lg border border-default-200 p-2 sm:flex-row sm:items-center">
                       <div className="min-w-0 flex-1 text-xs">
                         <div className="truncate">
                           {s.sessionId}
@@ -303,6 +304,7 @@ export default function SettingsPage() {
                         size="sm"
                         variant="flat"
                         color="danger"
+                        className="self-end sm:self-auto"
                         isDisabled={s.sessionId === user?.sessionId}
                         onPress={() => void revokeSession(s.sessionId)}
                       >
@@ -318,12 +320,12 @@ export default function SettingsPage() {
 
           <Tab title={t("settings.tabs.system")} key="system">
             <ConfigPageItem size="sm">
-              <div className="flex flex-row items-center gap-3 rounded-xl bg-white/30 dark:bg-black/25 backdrop-blur-md border border-white/30 dark:border-white/10 px-3 py-2">
+              <div className="flex flex-col items-start gap-2 rounded-xl bg-white/30 dark:bg-black/25 backdrop-blur-md border border-white/30 dark:border-white/10 px-3 py-2 sm:flex-row sm:items-center">
                 <Chip color={status === "ok" ? "success" : status === "error" ? "danger" : "warning"}>{status.toUpperCase()}</Chip>
-                <p className="text-xs text-default-500">{message}</p>
-                <Button className="ml-auto" size="sm" variant="flat" onPress={() => void checkHealth()} isLoading={status === "loading"}>{t("common.refresh")}</Button>
+                <p className="min-w-0 break-all text-xs text-default-500">{message}</p>
+                <Button className="sm:ml-auto" size="sm" variant="flat" onPress={() => void checkHealth()} isLoading={status === "loading"}>{t("common.refresh")}</Button>
               </div>
-              <div className="flex items-center gap-2 rounded-xl bg-white/30 dark:bg-black/25 backdrop-blur-md border border-white/30 dark:border-white/10 px-3 py-3">
+              <div className="flex flex-wrap items-center gap-2 rounded-xl bg-white/30 dark:bg-black/25 backdrop-blur-md border border-white/30 dark:border-white/10 px-3 py-3">
                 <Button size="sm" color="primary" startContent={<FiDownload />} onPress={() => void downloadDevCert()}>
                   {t("settings.system.devCertDownload")}
                 </Button>
@@ -336,6 +338,7 @@ export default function SettingsPage() {
             </ConfigPageItem>
           </Tab>
         </Tabs>
+        </div>
       </div>
     </section>
   );

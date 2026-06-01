@@ -1,4 +1,5 @@
 import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
 import FormModal from "../../../components/common/FormModal";
 import { Select, SelectItem } from "@heroui/select";
 import { TableCell, TableColumn, TableRow } from "@heroui/table";
@@ -11,6 +12,7 @@ import { LargeGlassInput } from "../../../components/common/LargeGlassField";
 import type { MountInfo } from "../../../controllers/mounts";
 import type { ShareInfo } from "../../../controllers/mounts";
 import type { ShareMyRoleInfo } from "../../../controllers/mounts";
+import { pickSingleSelectKey } from "./selectKey";
 
 type Row = ShareInfo & { key: string };
 
@@ -99,20 +101,45 @@ export default function SharedUsersPanel({
     if (!createOpen) return;
     setStep(1);
   }, [createOpen]);
+
+  function isMobileViewport(): boolean {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 768;
+  }
   return (
     <>
       <div className="rounded-sm border border-white/40 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/40">
-        <div className="flex items-end justify-between gap-3">
-          <Select label={t("shares.mountLabel")} selectedKeys={selectedMountID ? [selectedMountID] : []} onSelectionChange={(keys) => onMountChange(String(Array.from(keys)[0] ?? ""))}>
-            {manageableMounts.map((m) => <SelectItem key={m.id}>{`${m.name} (${m.id})`}</SelectItem>)}
-          </Select>
-          <div className="flex items-center gap-2">
-            <Button color="primary" onPress={() => onCreateOpenChange(true)} isDisabled={!selectedMountID}>{t("shares.createShareButton")}</Button>
+        <div className="flex items-end justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 md:max-w-md">
+            <span className="w-16 shrink-0 text-xs text-default-600">{t("shares.mountLabel")}</span>
+            <Select
+              className="min-w-0 flex-1"
+              size="sm"
+              classNames={{ trigger: "h-8 min-h-8", value: "text-xs" }}
+              aria-label={t("shares.mountLabel")}
+              selectedKeys={selectedMountID ? [selectedMountID] : []}
+              onSelectionChange={(keys) => onMountChange(pickSingleSelectKey(keys as "all" | Set<string | number>))}
+            >
+              {manageableMounts.map((m) => <SelectItem key={m.id}>{m.name}</SelectItem>)}
+            </Select>
           </div>
+          <Button className="shrink-0" size="sm" color="primary" onPress={() => onCreateOpenChange(true)} isDisabled={!selectedMountID}>{t("shares.createShareButton")}</Button>
         </div>
         <div className="mt-3 flex items-end gap-2">
-          <LargeGlassInput label={t("shares.applyLinkPlaceholder")} value={resolveToken} onValueChange={onResolveTokenChange} commitMode="blur" />
-          <Button color="secondary" onPress={onResolveLink} isDisabled={!resolveToken.trim()}>{t("shares.applyLinkButton")}</Button>
+          <Input
+            size="sm"
+            radius="sm"
+            variant="bordered"
+            className="min-w-0 flex-1"
+            placeholder={t("shares.applyLinkPlaceholder")}
+            value={resolveToken}
+            onValueChange={onResolveTokenChange}
+            classNames={{
+              inputWrapper: "h-9 min-h-9",
+              input: "text-sm",
+            }}
+          />
+          <Button size="sm" color="secondary" onPress={onResolveLink} isDisabled={!resolveToken.trim()}>{t("shares.applyLinkButton")}</Button>
         </div>
       </div>
       <div className="rounded-sm border border-white/40 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/40">
@@ -124,20 +151,27 @@ export default function SharedUsersPanel({
       {activeTab === "links" ? (
         <PaginatedTableShell
           ariaLabel="share-list"
-          wrapperClassName="h-[calc(100vh-420px)]"
+          wrapperClassName="min-h-[360px] gap-0"
           rows={rows}
           loading={loading}
           totalLabel={(n) => t("shares.totalShares", { count: n })}
           emptyContent={t("shares.emptyShares")}
-          header={<><TableColumn key="id">ID</TableColumn><TableColumn key="role">{t("shares.roleColumn")}</TableColumn><TableColumn key="state">{t("shares.linkStateColumn")}</TableColumn><TableColumn key="expires_at">{t("shares.expiresAtColumn")}</TableColumn><TableColumn key="max_uses">{t("shares.maxUsesColumn")}</TableColumn><TableColumn key="actions">{t("common.actions")}</TableColumn></>}
+          header={<><TableColumn key="role">{t("shares.roleColumn")}</TableColumn><TableColumn key="state">{t("shares.linkStateColumn")}</TableColumn><TableColumn key="expires_at">{t("shares.expiresAtColumn")}</TableColumn><TableColumn key="max_uses">{t("shares.maxUsesColumn")}</TableColumn><TableColumn key="actions" className="hidden md:table-cell">{t("common.actions")}</TableColumn></>}
           renderRow={(it) => (
-            <TableRow key={it.key}>
-              <TableCell>{it.id}</TableCell>
+            <TableRow
+              key={it.key}
+              className="cursor-pointer transition-all duration-150 active:scale-[0.992] active:bg-black/15 dark:active:bg-white/20 md:cursor-default md:active:scale-100 md:active:bg-transparent md:dark:active:bg-transparent"
+              onClick={() => {
+                if (!isMobileViewport()) return;
+                setDetailLink(it);
+                setDetailOpen(true);
+              }}
+            >
               <TableCell>{roleNameMap.get(it.roleId || it.role || "") || it.roleId || it.role || "-"}</TableCell>
               <TableCell>{it.state || (it.revoked_at ? "revoked" : "active")}</TableCell>
               <TableCell>{it.expires_at || "-"}</TableCell>
               <TableCell>{typeof it.maxUses === "number" ? `${it.usedCount ?? 0}/${it.maxUses}` : "-"}</TableCell>
-              <TableCell className="flex gap-2">
+              <TableCell className="hidden gap-2 md:flex">
                 <Button size="sm" variant="flat" onPress={() => { setDetailLink(it); setDetailOpen(true); }}>{t("shares.viewLinkButton")}</Button>
                 <Button size="sm" color="danger" variant="flat" isDisabled={it.state === "revoked" || !!it.revoked_at} onPress={() => onRevokeShare(it.id)}>{t("shares.revokeButton")}</Button>
                 <Button size="sm" variant="flat" onPress={() => onDeleteShare(it.id)}>{t("shares.deleteLinkButton")}</Button>
@@ -148,7 +182,7 @@ export default function SharedUsersPanel({
       ) : (
         <PaginatedTableShell
           ariaLabel="my-role-list"
-          wrapperClassName="h-[calc(100vh-420px)]"
+          wrapperClassName="min-h-[360px]"
           rows={myRoles.map((r, idx) => ({ ...r, key: `${r.mountId}-${r.roleId}-${idx}` }))}
           loading={loading}
           totalLabel={(n) => t("shares.totalMyRoles", { count: n })}
@@ -234,10 +268,10 @@ export default function SharedUsersPanel({
         </div>
         {step === 1 ? (
           <>
-            <Select label={t("shares.roleColumn")} selectedKeys={[shareRole]} onSelectionChange={(keys) => onShareRoleChange(String(Array.from(keys)[0]))}>
+            <Select label={t("shares.roleColumn")} selectedKeys={[shareRole]} onSelectionChange={(keys) => onShareRoleChange(pickSingleSelectKey(keys as "all" | Set<string | number>))}>
               {selectableRoles.map((r) => <SelectItem key={r}>{`${roleNameMap.get(r) || r} (ID:${r})`}</SelectItem>)}
             </Select>
-            <Select label={t("shares.expireModeLabel")} selectedKeys={[linkExpireMode]} onSelectionChange={(keys) => setLinkExpireMode(String(Array.from(keys)[0]) as "countdown" | "datetime")}>
+            <Select label={t("shares.expireModeLabel")} selectedKeys={[linkExpireMode]} onSelectionChange={(keys) => setLinkExpireMode(pickSingleSelectKey(keys as "all" | Set<string | number>) as "countdown" | "datetime")}>
               <SelectItem key="countdown">{t("shares.expireCountdown")}</SelectItem>
               <SelectItem key="datetime">{t("shares.expireDatetime")}</SelectItem>
             </Select>
@@ -250,7 +284,7 @@ export default function SharedUsersPanel({
           </>
         ) : (
           <>
-            <Select label={t("shares.expireModeLabel")} selectedKeys={[roleExpireMode]} onSelectionChange={(keys) => setRoleExpireMode(String(Array.from(keys)[0]) as "countdown" | "datetime")}>
+            <Select label={t("shares.expireModeLabel")} selectedKeys={[roleExpireMode]} onSelectionChange={(keys) => setRoleExpireMode(pickSingleSelectKey(keys as "all" | Set<string | number>) as "countdown" | "datetime")}>
               <SelectItem key="countdown">{t("shares.expireCountdown")}</SelectItem>
               <SelectItem key="datetime">{t("shares.expireDatetime")}</SelectItem>
             </Select>
@@ -277,10 +311,27 @@ export default function SharedUsersPanel({
           setEditGrantedOpen(false);
         }}
       >
-        <Select label={t("shares.roleColumn")} selectedKeys={editingRoleId ? [editingRoleId] : []} onSelectionChange={(keys) => setEditingRoleId(String(Array.from(keys)[0] ?? ""))}>
-          {grantedRoleOptions.map((r) => <SelectItem key={r.roleId}>{`${r.name} (ID:${r.roleId})`}</SelectItem>)}
-        </Select>
-        <LargeGlassInput type="datetime-local" label={t("shares.roleExpireAtColumn")} value={editingRoleExpireAt} onValueChange={setEditingRoleExpireAt} commitMode="blur" />
+        <div className="space-y-1">
+          <label className="text-sm text-default-700 dark:text-default-300">{t("shares.roleColumn")}</label>
+          <Select size="sm" selectedKeys={editingRoleId ? [editingRoleId] : []} onSelectionChange={(keys) => setEditingRoleId(pickSingleSelectKey(keys as "all" | Set<string | number>))}>
+            {grantedRoleOptions.map((r) => <SelectItem key={r.roleId}>{`${r.name} (ID:${r.roleId})`}</SelectItem>)}
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm text-default-700 dark:text-default-300">{t("shares.roleExpireAtColumn")}</label>
+          <Input
+            type="datetime-local"
+            size="sm"
+            radius="sm"
+            variant="bordered"
+            value={editingRoleExpireAt}
+            onChange={(event) => setEditingRoleExpireAt(event.target.value)}
+            classNames={{
+              inputWrapper: "h-9 min-h-9",
+              input: "text-sm",
+            }}
+          />
+        </div>
       </FormModal>
       <FormModal
         isOpen={detailOpen}
@@ -288,6 +339,8 @@ export default function SharedUsersPanel({
         title={t("shares.linkDetailTitle")}
         submitText={t("common.close")}
         cancelText={t("common.cancel")}
+        hideCancelButton
+        hideSubmitButton={isMobileViewport()}
         onSubmit={() => setDetailOpen(false)}
       >
         <LargeGlassInput
@@ -328,6 +381,14 @@ export default function SharedUsersPanel({
             </Button>
           )}
         />
+        <div className="flex gap-2 md:hidden">
+          <Button size="sm" color="danger" variant="flat" className="flex-1" isDisabled={detailLink?.state === "revoked" || !!detailLink?.revoked_at} onPress={() => { if (!detailLink) return; onRevokeShare(detailLink.id); setDetailOpen(false); }}>
+            {t("shares.revokeButton")}
+          </Button>
+          <Button size="sm" variant="flat" className="flex-1" onPress={() => { if (!detailLink) return; onDeleteShare(detailLink.id); setDetailOpen(false); }}>
+            {t("shares.deleteLinkButton")}
+          </Button>
+        </div>
       </FormModal>
     </>
   );

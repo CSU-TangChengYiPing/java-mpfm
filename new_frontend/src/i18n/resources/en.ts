@@ -1,6 +1,6 @@
 export const en = {
     translation: {
-      menu: { "File Management": "File Management", "Task Center": "Task Center", "Download Center": "Download Center", "Mounts Management": "Mounts Management", "Shares Management": "Shares Management", "0 Role Templates": "0 Role Templates", "1 Role Permissions": "1 Role Permissions", "2 Shared Links": "2 Shared Links", "3 Share Audit Logs": "3 Share Audit Logs", "4 My Shared Roles": "4 My Shared Roles", "Users Management": "Users Management", "QoS Policy Center": "QoS Policy Center", "Monitor Center": "Monitor Center",  "Tenants Management": "Tenants Management", "Teams Management": "Teams Management", "Migration Report": "Migration Report", Settings: "Settings", DEBUG: "DEBUG" },
+      menu: { "File Management": "File Management", "Task Center": "Task Center", "Download Center": "Download Center", "Mounts Management": "Mounts Management", "Shares Management": "Shares Management", "0 Role Templates": "0 Role Templates", "1 Role Permissions": "1 Role Permissions", "2 Shared Links": "2 Shared Links", "3 My Shared Roles": "3 My Shared Roles", "Users Management": "Users Management", "QoS Policy Center": "QoS Policy Center", "Monitor Center": "Monitor Center",  "Tenants Management": "Tenants Management", "Teams Management": "Teams Management", "Migration Report": "Migration Report", Settings: "Settings", DEBUG: "DEBUG" },
       language: { zh: "Chinese", en: "EN" },
       common: {
         actions: "Actions", all: "All", cancel: "Cancel", pause: "Pause", clear: "Clear", close: "Close", copy: "Copy", create: "Create", createFailed: "Create failed", createSuccess: "Created", expand: "Expand", collapse: "Collapse",
@@ -350,7 +350,7 @@ export const en = {
         deleteRoleTooltip: "Delete role",
         roleIdLabel: "Role ID",
         roleNameLabel: "Role Name",
-        editRoleTitle: "Edit Role: {{roleId}}",
+        editRoleTitle: "Edit Role: {{roleName}}",
         previewReadDenied: "Target role has no read permission on this directory",
         targetRoleLabel: "Target Role",
         modeEdit: "Edit Authorization",
@@ -370,13 +370,6 @@ export const en = {
         clearOverrideButton: "Clear Override",
         switchRoleFailed: "Failed to switch share role",
         switchRoleSuccess: "Share role switched",
-        totalAudits: "{{count}} audit logs",
-        emptyAudits: "No audit logs",
-        timeColumn: "Time",
-        actionColumn: "Action",
-        actorColumn: "Actor",
-        resultColumn: "Result",
-        detailColumn: "Detail",
         previewRoleLabel: "Preview Role",
         refreshPreviewButton: "Refresh Preview",
         goParent: "Parent Directory",
@@ -396,6 +389,8 @@ export const en = {
         revokeLinkFailed: "Failed to revoke share",
         permissionRequired: "At least one permission is required",
         roleIdRequired: "Role ID is required",
+        roleNameRequired: "Role name is required",
+        roleNameDuplicated: "Role name already exists. Please use another name",
         roleUpdated: "Role permissions updated",
         roleUpdateFailed: "Failed to update role permissions",
         roleCreated: "Role created",
@@ -457,7 +452,7 @@ export const en = {
       fileManager: {
         emptyTitle: "It is empty here, like a freshly cleaned little room", emptyDesc: "Drop some files here and let's make it lively", renameTitle: "Rename", renameLabel: "New name", moveTitle: "Select target directory",
         moveCurrent: "Current selection", moveEmpty: "Not selected", moveItems: "Moving", createTitle: "Create", createTypeFile: "File", createTypeDirectory: "Directory", createNameLabel: "Name", cancel: "Cancel", confirm: "Confirm",
-        create: "Create", tableLabel: "File list", pageSizeLabel: "Per page", totalLabel: "{{count}} total", selectionMode: "Selection mode", name: "Name", type: "Type", size: "Size", mtime: "Modified", actions: "Actions", permission: "Permissions",
+        create: "Create", tableLabel: "File list", pageSizeLabel: "Per page", totalLabel: "{{count}} total", selectionMode: "Selection mode", name: "Name", type: "Type", size: "Size", mtime: "Modified", actions: "Actions", permission: "Permissions", detailTitle: "Details",
         unsupportedPreview: "Preview is not supported for this file type", editFile: "Edit file", editLoading: "Loading file content...", pathRollback: "Path not found. Rolled back to last valid path.", loadFailed: "Failed to load file list", mountDisabled: "Mount is disabled",
         unsupportedEditType: "This file type ({{ext}}) cannot be edited online", fileTooLarge: "File too large (>{{max}} bytes) for online edit", openFailed: "Failed to open file", confirmDelete: "Delete file {{path}}?", nameRequired: "Name is required",
         invalidName: "Name cannot contain / or \\\\", dirExists: "Directory with the same name already exists", createTargetDir: "Create failed: target path is a directory", confirmBatchDelete: "Delete selected {{count}} items?", batchDeleteSuccess: "Batch delete succeeded",

@@ -21,42 +21,16 @@ import { yaml } from "@codemirror/lang-yaml";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import path from "path-browserify";
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import key from "../../const/key";
-import { usePersistentState } from "../../hooks/usePersistentState";
 import BlurModal from "../common/BlurModal";
 
 export const fileEditTextareaClassNames = { className: "mpfm-large-glass-field" };
 export const fileEditModalSize = "5xl";
-export type FileEditModalGeometry = { width: number; height: number };
-export const DEFAULT_FILE_EDIT_MODAL_GEOMETRY: FileEditModalGeometry = { width: 1120, height: 920 };
-const FILE_EDIT_MODAL_MIN_GEOMETRY: FileEditModalGeometry = { width: 760, height: 560 };
-export const fileEditModalClassNames = "box-border flex h-[min(90dvh,920px)] w-[min(94vw,1120px)] min-h-[560px] min-w-[760px] max-h-none max-w-none resize overflow-hidden flex-col";
+export const fileEditModalClassNames = "box-border flex h-[88dvh] w-[96vw] md:h-[86dvh] md:w-[88vw] lg:h-[84dvh] lg:w-[80vw] max-h-[960px] overflow-hidden flex-col";
 export const fileEditEditorShellClassName = "relative flex h-full min-h-0 w-full flex-1 min-w-0 overflow-hidden rounded-md border border-default-200/60 bg-content1 shadow-sm dark:border-default-700/70";
 export const fileEditLoadingShellClassName = "relative flex h-full min-h-0 w-full flex-1 min-w-0 overflow-hidden rounded-md border border-default-200/60 bg-content1 shadow-sm dark:border-default-700/70";
 export const fileEditCodeMirrorClassName = "h-full w-full min-w-0 overflow-hidden";
-
-function clampGeometryValue(value: number, min: number, max: number): number {
-  return Math.min(Math.max(Math.round(value), min), max);
-}
-
-export function resolveFileEditModalGeometry(geometry: Partial<FileEditModalGeometry> | null | undefined): FileEditModalGeometry {
-  const width = geometry?.width ?? DEFAULT_FILE_EDIT_MODAL_GEOMETRY.width;
-  const height = geometry?.height ?? DEFAULT_FILE_EDIT_MODAL_GEOMETRY.height;
-  return {
-    width: clampGeometryValue(width, FILE_EDIT_MODAL_MIN_GEOMETRY.width, DEFAULT_FILE_EDIT_MODAL_GEOMETRY.width),
-    height: clampGeometryValue(height, FILE_EDIT_MODAL_MIN_GEOMETRY.height, DEFAULT_FILE_EDIT_MODAL_GEOMETRY.height),
-  };
-}
-
-function buildFileEditModalStyle(geometry: FileEditModalGeometry): CSSProperties {
-  return {
-    width: `${geometry.width}px`,
-    height: `${geometry.height}px`,
-  };
-}
 
 type EditorLanguageKey = "plain" | "markdown" | "json" | "typescript" | "javascript" | "java" | "python" | "shell" | "yaml" | "xml" | "html" | "css" | "sql" | "rust" | "go" | "php" | "cpp";
 
@@ -164,12 +138,6 @@ export default function FileEditModal({ isOpen, file, isSaving, isLoading, onClo
   const { t } = useTranslation();
   const [isDark, setIsDark] = useState(() => typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
   const [draft, setDraft] = useState(file?.content ?? "");
-  const modalGeometryShellRef = useRef<HTMLDivElement | null>(null);
-  const [savedGeometry, setSavedGeometry] = usePersistentState<FileEditModalGeometry>(
-    key.fileEditModalGeometry,
-    DEFAULT_FILE_EDIT_MODAL_GEOMETRY,
-  );
-  const modalGeometry = useMemo(() => resolveFileEditModalGeometry(savedGeometry), [savedGeometry]);
   const languageKey = resolveEditorLanguageKey(file?.path);
   const languageExtension = useMemo(() => resolveLanguageExtension(languageKey), [languageKey]);
   const editorTheme = useMemo(() => createEditorTheme(isDark), [isDark]);
@@ -192,30 +160,6 @@ export default function FileEditModal({ isOpen, file, isSaving, isLoading, onClo
     setDraft(file?.content ?? "");
   }, [file?.content, file?.path, isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const modalElement = modalGeometryShellRef.current;
-    if (!modalElement || typeof ResizeObserver === "undefined") return;
-    let frameId = 0;
-    const syncGeometry = () => {
-      const rect = modalElement.getBoundingClientRect();
-      const nextGeometry = resolveFileEditModalGeometry({ width: rect.width, height: rect.height });
-      setSavedGeometry((current) => (
-        current.width === nextGeometry.width && current.height === nextGeometry.height ? current : nextGeometry
-      ));
-    };
-    const observer = new ResizeObserver(() => {
-      cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(syncGeometry);
-    });
-    observer.observe(modalElement);
-    syncGeometry();
-    return () => {
-      cancelAnimationFrame(frameId);
-      observer.disconnect();
-    };
-  }, [isOpen, setSavedGeometry]);
-
   return (
     <BlurModal
       radius="sm"
@@ -224,8 +168,8 @@ export default function FileEditModal({ isOpen, file, isSaving, isLoading, onClo
       onClose={onClose}
       scrollBehavior="inside"
     >
-      <ModalContent className={fileEditModalClassNames} style={buildFileEditModalStyle(modalGeometry)}>
-        <div ref={modalGeometryShellRef} className="flex h-full min-h-0 w-full min-w-0 flex-col">
+      <ModalContent className={fileEditModalClassNames}>
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
           <ModalHeader className="flex-shrink-0 border-b border-default-200/50">{t("fileManager.editFile")}: {file?.path}</ModalHeader>
           <ModalBody className="flex min-h-0 flex-1 overflow-hidden p-4">
             <div className={isLoading ? fileEditLoadingShellClassName : fileEditEditorShellClassName}>

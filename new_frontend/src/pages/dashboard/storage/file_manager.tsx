@@ -1,13 +1,12 @@
 import { BreadcrumbItem, Breadcrumbs } from "@heroui/breadcrumbs";
 import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
 import type { SortDescriptor } from "@heroui/table";
 import clsx from "clsx";
 import path from "path-browserify";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
-import { FiCheck, FiCheckSquare, FiDownload, FiMove, FiPlus, FiUpload, FiX } from "react-icons/fi";
+import { FiCheckSquare, FiDownload, FiMove, FiPlus, FiUpload, FiX } from "react-icons/fi";
 import { MdRefresh } from "react-icons/md";
 import { TbTrash } from "react-icons/tb";
 import { TiArrowBack } from "react-icons/ti";
@@ -897,8 +896,8 @@ export default function FileManagerPage() {
   const hasBackground = !!backgroundImage;
 
   return (
-    <div className="h-full flex flex-col relative gap-4 w-full p-2 md:p-4">
-      <div className={clsx("mb-4 flex flex-col md:flex-row items-stretch md:items-center gap-4 sticky top-14 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors", hasBackground ? "bg-white/20 dark:bg-black/10 border border-white/40 dark:border-white/10" : "bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10")}>
+    <div className="h-full flex flex-col relative gap-0 w-full p-2 md:p-4">
+      <div className={clsx("mb-4 flex flex-col md:flex-row items-stretch md:items-center gap-4 sticky top-2 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors", hasBackground ? "bg-white/20 dark:bg-black/10 border border-white/40 dark:border-white/10" : "bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10")}>
         <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0">
           <ShadowTooltip content={t("shares.goParent")}><Button aria-label={t("shares.goParent")} radius="sm" color="primary" size="sm" isIconOnly variant="flat" onPress={() => handleDirectoryClick("..") } className="text-lg min-w-8"><TiArrowBack /></Button></ShadowTooltip>
           <ShadowTooltip content={t("fileManager.createTitle")}><Button aria-label={t("fileManager.createTitle")} radius="sm" color="primary" size="sm" isIconOnly variant="flat" onPress={() => setIsCreateModalOpen(true)} className="text-lg min-w-8"><FiPlus /></Button></ShadowTooltip>
@@ -926,11 +925,10 @@ export default function FileManagerPage() {
         </div>
 
         <div className="flex flex-1 gap-2 overflow-hidden items-stretch md:items-center">
-          <div className="flex-1 rounded-sm border border-white/20 bg-white/40 px-2 py-1 shadow-sm backdrop-blur-md dark:bg-black/20">
+          <div className="flex h-8 flex-1 items-center overflow-hidden rounded-sm border border-white/20 bg-white/40 shadow-sm backdrop-blur-md dark:bg-black/20">
             {isPathEditing ? (
-              <Input
+              <input
                 autoFocus
-                radius="sm"
                 type="text"
                 placeholder={t("fileManager.pathPlaceholder")}
                 value={jumpPath}
@@ -946,15 +944,10 @@ export default function FileManagerPage() {
                   setIsPathEditing(false);
                   setJumpPath(currentPath);
                 }}
-                className="w-full mpfm-path-jump-input"
-                classNames={{
-                  inputWrapper:
-                    "bg-white/40 dark:bg-black/20 backdrop-blur-md px-2",
-                  input: "text-sm text-default-700 dark:text-default-200",
-                }}
+                className="h-full w-full box-border border-0 bg-transparent px-2 text-base md:text-sm text-default-700 outline-none placeholder:text-default-400 focus:outline-none focus:ring-0 dark:text-default-200"
               />
             ) : (
-              <div onClick={() => { setIsPathEditing(true); setJumpPath(currentPath); }}>
+              <div className="w-full" onClick={() => { setIsPathEditing(true); setJumpPath(currentPath); }}>
                 <Breadcrumbs radius="sm" className="overflow-x-auto hide-scrollbar whitespace-nowrap">
                   {currentPath.split("/").map((part, index, parts) => (
                     <BreadcrumbItem
@@ -972,23 +965,6 @@ export default function FileManagerPage() {
               </div>
             )}
           </div>
-          <Button
-            radius="sm"
-            color="primary"
-            size="sm"
-            variant="flat"
-            onPress={() => {
-              if (isPathEditing) confirmJumpPath();
-              else {
-                setIsPathEditing(true);
-                setJumpPath(currentPath);
-              }
-            }}
-            startContent={<FiCheck />}
-            className="shrink-0"
-          >
-            {t("fileManager.pathConfirm")}
-          </Button>
         </div>
       </div>
 

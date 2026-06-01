@@ -125,18 +125,6 @@ export type ShareMyRoleSummaryInfo = {
   grantedAt?: string;
 };
 
-export type ShareAuditInfo = {
-  id: string;
-  mountId: string;
-  mount_id?: string;
-  share_id?: string;
-  action: string;
-  actor: string;
-  result: string;
-  detail?: string;
-  occurred_at: string;
-};
-
 export type ShareRoleTemplate = {
   id: string;
   templateId?: string;
@@ -227,13 +215,6 @@ function normalizeShare(item: ShareInfo): ShareInfo {
     roleId: item.roleId || item.role || "",
     expires_at: item.expires_at || row.expireAt,
     created_by: item.created_by || row.createdByUserId || "",
-  };
-}
-
-function normalizeAudit(item: ShareAuditInfo): ShareAuditInfo {
-  return {
-    ...item,
-    mountId: item.mountId || item.mount_id || "",
   };
 }
 
@@ -720,11 +701,6 @@ export default class MountsController {
     const resp = await request(`/api/v1/permissions/effective?${query.toString()}`);
     const body = (await resp.json()) as { permissions?: string[] };
     return body.permissions ?? [];
-  }
-
-  static async listShareAudits(mountId: string): Promise<ShareAuditInfo[]> {
-    const resp = await request(`/api/v1/mounts/${encodeURIComponent(mountId)}/share-audits`);
-    return asList<ShareAuditInfo>(await resp.json()).map(normalizeAudit);
   }
 
   static async listShareGrants(mountId: string): Promise<ShareGrantInfo[]> {

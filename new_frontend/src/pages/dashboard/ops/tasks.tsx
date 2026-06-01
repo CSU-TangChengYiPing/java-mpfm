@@ -2,6 +2,7 @@ import { Button } from "@heroui/button";
 import { Checkbox } from "@heroui/checkbox";
 import { Chip } from "@heroui/chip";
 import { Input } from "@heroui/input";
+import { ModalBody, ModalContent, ModalFooter, ModalHeader } from "@heroui/modal";
 import { Progress } from "@heroui/progress";
 import { Select, SelectItem } from "@heroui/select";
 import { TableCell, TableColumn, TableRow } from "@heroui/table";
@@ -9,7 +10,8 @@ import clsx from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { FiCheckSquare, FiPause, FiPlay, FiRefreshCw, FiRotateCw, FiTrash2, FiX } from "react-icons/fi";
+import { FiCheckSquare, FiMoreVertical, FiPause, FiPlay, FiRefreshCw, FiTrash2, FiX } from "react-icons/fi";
+import BlurModal from "../../../components/common/BlurModal";
 import PaginatedTableShell from "../../../components/common/PaginatedTableShell";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import key from "../../../const/key";
@@ -52,14 +54,17 @@ function renderRangeProgress(task: TaskInfo) {
   const loaded = Math.max(0, Number(task.transferredBytes ?? 0));
   const total = Math.max(0, Number(task.totalBytes ?? 0));
   const progressLabel = `${formatMb(loaded)} / ${formatMb(total)}`;
+  const speedLabel = formatRate(task.speedBytesPerSec);
   const rangeMarks = states.length > 0 ? states : [];
   return (
     <div className="flex items-center gap-2 min-w-[220px]">
       <div className="relative flex-1 min-w-0 h-6 flex items-center">
-        <div className="absolute -top-3 left-0 pointer-events-none">
-          <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] leading-none text-default-700 bg-default-100/90 dark:bg-default-200/20 dark:text-default-300 shadow-sm">
-            {progressLabel}
-          </span>
+        <div className="absolute -top-3 left-0 pointer-events-none hidden md:block">
+          <div className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] leading-none text-default-700 bg-default-100/90 dark:bg-default-200/20 dark:text-default-300 shadow-sm">
+            <span>{progressLabel}</span>
+            <span className="text-default-500">|</span>
+            <span>{speedLabel}</span>
+          </div>
         </div>
         <div className="relative w-full">
           <Progress
@@ -87,6 +92,22 @@ function renderRangeProgress(task: TaskInfo) {
   );
 }
 
+function renderCompactProgress(task: TaskInfo) {
+  const percent = Math.max(0, Math.min(100, Math.round(task.progress || 0)));
+  const loaded = Math.max(0, Number(task.transferredBytes ?? 0));
+  const total = Math.max(0, Number(task.totalBytes ?? 0));
+  const speedLabel = formatRate(task.speedBytesPerSec);
+  return (
+    <div className="w-full min-w-0">
+      <Progress aria-label="download-progress-mobile" size="sm" radius="sm" value={percent} className="w-full" />
+      <div className="mt-0.5 flex items-center justify-between text-[8px] leading-tight text-default-500">
+        <span className="min-w-0 flex-1 truncate">{`${formatMb(loaded)} / ${formatMb(total)} | ${speedLabel}`}</span>
+        <span>{percent}%</span>
+      </div>
+    </div>
+  );
+}
+
 /**
  * 任务中心页面：SSE 实时更新优先，轮询仅作为兜底，并按运行/空闲/隐藏三档动态调整请求频率。
  * 任务操作后优先做行级懒更新，再由实时流与轮询收敛到服务端最终状态。
@@ -99,6 +120,8 @@ export default function TasksPage() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [mobileMoreTask, setMobileMoreTask] = useState<TaskInfo | null>(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
   const sortedTasks = useMemo(() => {
     const q = keyword.trim().toLowerCase();
@@ -150,6 +173,15 @@ export default function TasksPage() {
       const message = error instanceof Error ? error.message : String(error);
       toast.error(t("tasks.pauseFailed", { message }));
     }
+  };
+
+  const handlePrimaryAction = async (task: TaskInfo) => {
+    const status = normalizeStatus(task.status);
+    if (status === "FAILED") {
+      await handleRetry(task.taskId);
+      return;
+    }
+    await handleCancel(task.taskId);
   };
 
   const handleDelete = async (taskId: string) => {
@@ -219,7 +251,7 @@ export default function TasksPage() {
     <div className="h-full w-full p-2 md:p-4" data-testid="tasks-page">
       <div
         className={clsx(
-          "mb-4 flex items-center gap-2 sticky top-14 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors",
+          "mb-4 flex items-center gap-2 sticky top-2 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors",
           hasBackground ? "bg-white/20 dark:bg-black/10 border border-white/40 dark:border-white/10" : "bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10"
         )}
       >
@@ -255,6 +287,20 @@ export default function TasksPage() {
             {selectionMode ? <FiX /> : <FiCheckSquare />}
           </Button>
         </ShadowTooltip>
+        {selected.size > 0 && (
+          <Button
+            radius="sm"
+            color="danger"
+            size="sm"
+            variant="flat"
+            className="text-sm px-2 min-w-fit"
+            startContent={<FiTrash2 className="text-lg" />}
+            onPress={() => void handleDeleteSelected()}
+            isDisabled={!selectionMode}
+          >
+            ({selected.size})
+          </Button>
+        )}
         <Input
           size="sm"
           className="max-w-[260px]"
@@ -278,23 +324,7 @@ export default function TasksPage() {
           <SelectItem key="SUCCESS">{t("tasks.status.success")}</SelectItem>
           <SelectItem key="FAILED">{t("tasks.status.failed")}</SelectItem>
         </Select>
-        {selected.size > 0 && (
-          <Button
-            radius="sm"
-            color="danger"
-            size="sm"
-            variant="flat"
-            className="text-sm px-2 min-w-fit"
-            startContent={<FiTrash2 className="text-lg" />}
-            onPress={() => void handleDeleteSelected()}
-            isDisabled={!selectionMode}
-          >
-            ({selected.size})
-          </Button>
-        )}
-        <span className="ml-auto text-xs text-default-500">
-          {t("fileManager.totalLabel", { count: tableRows.length })}
-        </span>
+        <span className="ml-auto" />
       </div>
       <PaginatedTableShell
         ariaLabel={t("menu.Download Center")}
@@ -305,25 +335,24 @@ export default function TasksPage() {
         enablePageSizeInput
         pageSizeLabel={t("fileManager.pageSizeLabel")}
         pageSizePlaceholder="20/all"
-        wrapperClassName="min-h-[420px]"
+        wrapperClassName="min-h-[420px] !overflow-x-auto [&_thead]:hidden md:[&_thead]:table-header-group [&_table]:table-fixed [&_tbody_tr_td]:py-2 md:[&_tbody_tr_td]:py-3 [&_tbody_tr_td:last-child]:pr-2 md:[&_tbody_tr_td:last-child]:pr-3"
         header={(
           <>
-            <TableColumn key="pick" className="w-[48px]">
+            <TableColumn key="pick" className="hidden w-[48px] md:table-cell">
               {selectionMode ? <Checkbox isSelected={allSelected} isIndeterminate={partiallySelected} onValueChange={toggleSelectAll} /> : ""}
             </TableColumn>
-            <TableColumn key="fileName" className="w-[420px]">{t("tasks.colFileName")}</TableColumn>
-            <TableColumn key="status" className="w-[120px]">{t("tasks.colStatus")}</TableColumn>
-            <TableColumn key="speed" className="w-[120px]">{t("tasks.metricSpeed")}</TableColumn>
-            <TableColumn key="progress" className="w-[260px]">{t("tasks.colProgressBar")}</TableColumn>
-            <TableColumn key="actions" className="w-[220px]">{t("common.actions")}</TableColumn>
+            <TableColumn key="fileName" className="w-[calc(100%-72px)] md:w-[34%] md:min-w-[220px]">{t("tasks.colFileName")}</TableColumn>
+            <TableColumn key="status" className="hidden w-[120px] md:table-cell">{t("tasks.colStatus")}</TableColumn>
+            <TableColumn key="progress" className="w-[360px]">{t("tasks.colProgressBar")}</TableColumn>
+            <TableColumn key="actions" className="w-[72px] md:w-[132px] md:min-w-[132px]">{t("common.actions")}</TableColumn>
           </>
         )}
         renderRow={(task) => {
           const status = normalizeStatus(task.status);
           const statusColor = status === "SUCCESS" ? "success" : status === "FAILED" ? "danger" : status === "CANCELED" ? "warning" : "primary";
           return (
-            <TableRow key={task.key}>
-              <TableCell>
+            <TableRow key={task.key} className="border-b border-default-200/60 md:border-b-0">
+              <TableCell className="hidden md:table-cell">
                 {selectionMode ? (
                   <Checkbox
                     isSelected={selected.has(task.taskId)}
@@ -338,42 +367,31 @@ export default function TasksPage() {
                   />
                 ) : null}
               </TableCell>
-              <TableCell>
-                <div className="min-w-0">
-                  <div className="truncate max-w-[380px]">{highlight(task.targetName || task.target || task.taskId)}</div>
-                  <div className="truncate max-w-[380px] text-xs text-default-400">{highlight(task.target || "-")}</div>
+              <TableCell className="pr-1 text-[11px] leading-tight md:text-sm overflow-hidden align-top">
+                <div className="min-w-0 w-full overflow-hidden">
+                  <div className="flex items-center gap-1">
+                    <div className="min-w-0 flex-1 overflow-hidden truncate">{highlight(task.targetName || task.target || task.taskId)}</div>
+                    <Chip size="sm" color={statusColor} className="md:hidden scale-90 origin-left">{task.status || "-"}</Chip>
+                  </div>
+                  <div className="hidden truncate max-w-[380px] text-xs text-default-400 md:block">{highlight(task.target || "-")}</div>
+                  <div className="mt-0.5 md:hidden">{renderCompactProgress(task)}</div>
                 </div>
               </TableCell>
-              <TableCell><Chip size="sm" color={statusColor}>{task.status || "-"}</Chip></TableCell>
-              <TableCell>{formatRate(task.speedBytesPerSec)}</TableCell>
-              <TableCell>{renderRangeProgress(task)}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <ShadowTooltip content={task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED" ? t("tasks.resume") : t("common.pause")}>
+              <TableCell className="hidden md:table-cell"><Chip size="sm" color={statusColor}>{task.status || "-"}</Chip></TableCell>
+              <TableCell className="hidden md:table-cell">{renderRangeProgress(task)}</TableCell>
+              <TableCell className="w-[72px] pl-1 align-top md:min-w-[132px]">
+                <div className="hidden items-center gap-2 whitespace-nowrap md:flex">
+                  <ShadowTooltip content={normalizeStatus(task.status) === "FAILED" ? t("tasks.retry") : (task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED" ? t("tasks.resume") : t("common.pause"))}>
                     <Button
-                      aria-label={task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED" ? t("tasks.resume") : t("common.pause")}
+                      aria-label={normalizeStatus(task.status) === "FAILED" ? t("tasks.retry") : (task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED" ? t("tasks.resume") : t("common.pause"))}
                       size="sm"
                       variant="flat"
                       isIconOnly
                       className="text-lg min-w-8"
-                      isDisabled={!isActiveTask(task.status) && normalizeStatus(task.status) !== "PAUSED"}
-                      onPress={() => void handleCancel(task.taskId)}
+                      isDisabled={!isActiveTask(task.status) && normalizeStatus(task.status) !== "PAUSED" && normalizeStatus(task.status) !== "FAILED"}
+                      onPress={() => void handlePrimaryAction(task)}
                     >
-                      {task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED" ? <FiPlay /> : <FiPause />}
-                    </Button>
-                  </ShadowTooltip>
-                  <ShadowTooltip content={t("tasks.retry")}>
-                    <Button
-                      aria-label={t("tasks.retry")}
-                      size="sm"
-                      variant="flat"
-                      color="primary"
-                      isIconOnly
-                      className="text-lg min-w-8"
-                      isDisabled={normalizeStatus(task.status) !== "FAILED"}
-                      onPress={() => void handleRetry(task.taskId)}
-                    >
-                      <FiRotateCw />
+                      {normalizeStatus(task.status) === "FAILED" || (task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED") ? <FiPlay /> : <FiPause />}
                     </Button>
                   </ShadowTooltip>
                   <ShadowTooltip content={t("common.delete")}>
@@ -390,11 +408,61 @@ export default function TasksPage() {
                     </Button>
                   </ShadowTooltip>
                 </div>
+                <div className="mt-1 flex items-center gap-1 md:hidden">
+                  <Button
+                    aria-label={normalizeStatus(task.status) === "FAILED" ? t("tasks.retry") : (task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED" ? t("tasks.resume") : t("common.pause"))}
+                    size="sm"
+                    variant="flat"
+                    isIconOnly
+                    className="text-lg min-w-8"
+                    isDisabled={!isActiveTask(task.status) && normalizeStatus(task.status) !== "PAUSED" && normalizeStatus(task.status) !== "FAILED"}
+                    onPress={() => void handlePrimaryAction(task)}
+                  >
+                    {normalizeStatus(task.status) === "FAILED" || (task.taskId.startsWith("download-local-") && normalizeStatus(task.status) === "PAUSED") ? <FiPlay /> : <FiPause />}
+                  </Button>
+                  <Button aria-label={t("common.actions")} size="sm" variant="flat" isIconOnly className="text-lg min-w-8" onPress={() => { setMobileMoreTask(task); setMobileDetailOpen(false); }}>
+                    <FiMoreVertical />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           );
         }}
       />
+      <BlurModal isOpen={!!mobileMoreTask} onClose={() => { setMobileMoreTask(null); setMobileDetailOpen(false); }} radius="sm">
+        <ModalContent>
+          <ModalHeader>{t("common.actions")}</ModalHeader>
+          <ModalBody className="gap-2">
+            {!mobileDetailOpen ? (
+              <div className="flex flex-col gap-2">
+                <Button size="sm" variant="flat" onPress={() => setMobileDetailOpen(true)}>{t("tasks.detail")}</Button>
+                <Button
+                  size="sm"
+                  color="danger"
+                  variant="flat"
+                  onPress={() => {
+                    if (!mobileMoreTask) return;
+                    void handleDelete(mobileMoreTask.taskId);
+                    setMobileMoreTask(null);
+                  }}
+                >
+                  {t("common.delete")}
+                </Button>
+              </div>
+            ) : (
+              <div className="text-sm">
+                <div><span className="text-default-500">{t("tasks.colTarget")}：</span><span>{mobileMoreTask?.target || "-"}</span></div>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            {mobileDetailOpen ? (
+              <Button variant="flat" onPress={() => setMobileDetailOpen(false)}>{t("common.previous")}</Button>
+            ) : null}
+            <Button variant="flat" onPress={() => { setMobileMoreTask(null); setMobileDetailOpen(false); }}>{t("common.close")}</Button>
+          </ModalFooter>
+        </ModalContent>
+      </BlurModal>
     </div>
   );
 }

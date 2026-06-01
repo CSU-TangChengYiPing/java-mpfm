@@ -4,6 +4,7 @@ import { type SortDescriptor } from "@heroui/table";
 import { useTranslation } from "react-i18next";
 import FileTable from "../../../components/file_manage/file_table";
 import type { FileInfo } from "../../../controllers/file_manager";
+import { pickSingleSelectKey } from "./selectKey";
 
 /** 角色预览面板：以只读方式展示目标角色在当前路径下的可见结果。 */
 export default function RolePreviewPanel(props: {
@@ -23,7 +24,7 @@ export default function RolePreviewPanel(props: {
   return (
     <>
       <div className="rounded-sm border border-white/40 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/40 flex items-end gap-3">
-        <Select label={t("shares.previewRoleLabel")} selectedKeys={[p.previewRole]} onSelectionChange={(keys) => p.onPreviewRoleChange(String(Array.from(keys)[0]))}>
+        <Select label={t("shares.previewRoleLabel")} selectedKeys={[p.previewRole]} onSelectionChange={(keys) => p.onPreviewRoleChange(pickSingleSelectKey(keys as "all" | Set<string | number>))}>
           {p.presetRoleList.map((r) => <SelectItem key={r}>{r}</SelectItem>)}
         </Select>
         <Button color="primary" onPress={p.onRefreshPreview} isDisabled={!p.selectedMountID}>{t("shares.refreshPreviewButton")}</Button>

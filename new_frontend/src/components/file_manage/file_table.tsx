@@ -1,15 +1,17 @@
 import { Button, ButtonGroup } from "@heroui/button";
 import { Checkbox } from "@heroui/checkbox";
+import { ModalBody, ModalContent, ModalFooter, ModalHeader } from "@heroui/modal";
 import { Spinner } from "@heroui/spinner";
 import { type SortDescriptor, TableCell, TableColumn, TableRow } from "@heroui/table";
 import clsx from "clsx";
 import path from "path-browserify";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiBookOpen, FiCopy, FiDownload, FiEdit2, FiEye, FiMove, FiTrash2 } from "react-icons/fi";
+import { FiBookOpen, FiCopy, FiDownload, FiEdit2, FiEye, FiInfo, FiMove, FiTrash2 } from "react-icons/fi";
 import { PhotoSlider } from "react-photo-view";
 import i18n from "../../i18n";
 import FileIcon from "../common/file_icon";
+import BlurModal from "../common/BlurModal";
 import FileManager, { type FileInfo } from "../../controllers/file_manager";
 import { reportTransferSample } from "../../utils/transferRateMeter";
 import { supportedPreviewExts } from "./preview_types";
@@ -77,6 +79,17 @@ export function getFileTypeLabel(file: FileInfo): string {
   return typeKey ? i18n.t(`types.${typeKey}`) : ext.slice(1).toUpperCase();
 }
 
+export function resolveFilePermissionText(file: FileInfo, currentIsRoot?: boolean): string {
+  const visible = currentIsRoot ? true : file.visible !== false;
+  const readable = currentIsRoot ? true : file.readable !== false;
+  const writable = currentIsRoot ? true : file.writable === true;
+  const labels: string[] = [];
+  if (visible) labels.push("visible");
+  if (readable) labels.push("read");
+  if (writable) labels.push("write");
+  return labels.length > 0 ? labels.join(", ") : "N/A";
+}
+
 function getVirtualTypeLabel(currentPath: string, file: FileInfo, resolveMountProtocol?: (mountName: string) => string | undefined): string {
   if (!file.isDirectory) return getFileTypeLabel(file);
   const cp = (currentPath || ".").replace(/\\/g, "/").replace(/^\/+/, "");
@@ -121,6 +134,7 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
   const [previewSizeMap, setPreviewSizeMap] = useState<Record<string, number>>({});
   const [resolvedImageSrcMap, setResolvedImageSrcMap] = useState<Record<string, string>>({});
   const [imageLoadedBytesMap, setImageLoadedBytesMap] = useState<Record<string, number>>({});
+  const [detailFile, setDetailFile] = useState<FileInfo | null>(null);
   const inflightRef = useRef<Map<string, Promise<void>>>(new Map());
   const lowPriorityQueueRef = useRef<string[]>([]);
   const lowPriorityWorkerRunningRef = useRef(false);
@@ -436,6 +450,7 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
                     )}
                     {showDefaultActions && <ShadowTooltip content={t("fileManager.pathCopied")}><Button aria-label={t("fileManager.pathCopied")} isIconOnly className="text-default-500 hover:text-primary" onPress={() => onCopyPath(filePath)}><FiCopy /></Button></ShadowTooltip>}
                     {showDefaultActions && <ShadowTooltip content={t("common.download")}><Button aria-label={t("common.download")} isIconOnly className="text-default-500 hover:text-primary" isDisabled={!canOperate || file.isDirectory || !canRead} onPress={() => onDownload(filePath)}><FiDownload /></Button></ShadowTooltip>}
+                    <ShadowTooltip content={t("fileManager.detailTitle")}><Button aria-label={t("fileManager.detailTitle")} isIconOnly className="text-default-500 hover:text-primary md:hidden" onPress={() => setDetailFile(file)}><FiInfo /></Button></ShadowTooltip>
                     {showDefaultActions && <ShadowTooltip content={t("common.delete")}><Button aria-label={t("common.delete")} isIconOnly color="danger" className="text-danger hover:bg-danger/10" isDisabled={!canOperate || !canManage} onPress={() => onDelete(filePath)}><FiTrash2 /></Button></ShadowTooltip>}
                   </ButtonGroup>
                 </TableCell>
@@ -443,6 +458,21 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
             );
           }}
       />
+      <BlurModal isOpen={!!detailFile} onClose={() => setDetailFile(null)} radius="sm">
+        <ModalContent>
+          <ModalHeader>{t("fileManager.detailTitle")}</ModalHeader>
+          <ModalBody className="gap-2 text-sm">
+            <div><span className="text-default-500">{t("fileManager.name")}：</span><span>{detailFile?.name ?? "-"}</span></div>
+            <div><span className="text-default-500">{t("fileManager.type")}：</span><span>{detailFile ? getVirtualTypeLabel(currentPath, detailFile, resolveMountProtocol) : "-"}</span></div>
+            <div><span className="text-default-500">{t("fileManager.size")}：</span><span>{detailFile ? (Number.isNaN(detailFile.size) || detailFile.isDirectory ? "-" : formatBytes(detailFile.size)) : "-"}</span></div>
+            <div><span className="text-default-500">{t("fileManager.mtime")}：</span><span>{detailFile ? new Date(detailFile.mtime).toLocaleString() : "-"}</span></div>
+            <div><span className="text-default-500">{t("fileManager.permission")}：</span><span>{detailFile ? resolveFilePermissionText(detailFile, currentIsRoot) : "-"}</span></div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="flat" onPress={() => setDetailFile(null)}>{t("common.close")}</Button>
+          </ModalFooter>
+        </ModalContent>
+      </BlurModal>
     </>
   );
 }

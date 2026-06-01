@@ -15,6 +15,8 @@ type FormModalProps = {
   isDismissable?: boolean;
   secondaryActionText?: ReactNode;
   onSecondaryAction?: () => void;
+  hideCancelButton?: boolean;
+  hideSubmitButton?: boolean;
 };
 
 export default function FormModal({
@@ -29,6 +31,8 @@ export default function FormModal({
   isDismissable = true,
   secondaryActionText,
   onSecondaryAction,
+  hideCancelButton = false,
+  hideSubmitButton = false,
 }: FormModalProps) {
   return (
     <BlurModal
@@ -42,17 +46,21 @@ export default function FormModal({
         <ModalHeader>{title}</ModalHeader>
         <ModalBody className="gap-3">{children}</ModalBody>
         <ModalFooter>
-          <Button variant="flat" onPress={onClose}>
-            {cancelText}
-          </Button>
+          {!hideCancelButton ? (
+            <Button variant="flat" onPress={onClose}>
+              {cancelText}
+            </Button>
+          ) : null}
           {secondaryActionText && onSecondaryAction ? (
             <Button variant="flat" onPress={onSecondaryAction}>
               {secondaryActionText}
             </Button>
           ) : null}
-          <Button color="primary" onPress={onSubmit}>
-            {submitText}
-          </Button>
+          {!hideSubmitButton ? (
+            <Button color="primary" onPress={onSubmit}>
+              {submitText}
+            </Button>
+          ) : null}
         </ModalFooter>
       </ModalContent>
     </BlurModal>

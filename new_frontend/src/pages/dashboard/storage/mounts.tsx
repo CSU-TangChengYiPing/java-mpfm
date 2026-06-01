@@ -1,6 +1,6 @@
-import { Button, ButtonGroup } from "@heroui/button";
+import { Button } from "@heroui/button";
 import { Checkbox } from "@heroui/checkbox";
-import { Chip } from "@heroui/chip";
+import { Switch } from "@heroui/switch";
 import { LargeGlassInput } from "../../../components/common/LargeGlassField";
 import { ModalBody, ModalContent, ModalFooter, ModalHeader } from "@heroui/modal";
 import { type SortDescriptor, TableCell, TableColumn, TableRow } from "@heroui/table";
@@ -91,6 +91,7 @@ export default function MountsPage() {
   const [loading, setLoading] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({ column: "name", direction: "ascending" });
 
   const [mountName, setMountName] = useState("");
@@ -117,6 +118,8 @@ export default function MountsPage() {
   const [editPass, setEditPass] = useState("");
   const [editRemoteRoot, setEditRemoteRoot] = useState("");
   const [editSharedEnabled, setEditSharedEnabled] = useState(false);
+  const [editEnabled, setEditEnabled] = useState(false);
+  const [editOriginalEnabled, setEditOriginalEnabled] = useState(false);
   const [editFieldErrors, setEditFieldErrors] = useState<{ name?: string }>({});
   const [editFormError, setEditFormError] = useState("");
 
@@ -334,7 +337,33 @@ export default function MountsPage() {
   }
 
   async function toggleMountEnabled(m: MountInfo) {
-    await mountAction(m.enabled ? "disable" : "enable", m.id);
+    setTogglingIds((prev) => new Set(prev).add(m.id));
+    try {
+      await mountAction(m.enabled ? "disable" : "enable", m.id);
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(m.id);
+        return next;
+      });
+    }
+  }
+
+  async function toggleMountSharedEnabled(m: MountInfo) {
+    setTogglingIds((prev) => new Set(prev).add(m.id));
+    try {
+      await MountsController.update(m.id, { name: m.name, shared_enabled: !m.shared_enabled });
+      toast.success(t("mounts.updated"));
+      await fetchMounts();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("mounts.updateFailed"));
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(m.id);
+        return next;
+      });
+    }
   }
 
   function openEditModal(m: MountInfo) {
@@ -361,6 +390,8 @@ export default function MountsPage() {
     setEditPass("");
     setEditRemoteRoot(remoteRootPart || "/");
     setEditSharedEnabled(!!m.shared_enabled);
+    setEditEnabled(!!m.enabled);
+    setEditOriginalEnabled(!!m.enabled);
     setIsEditModalOpen(true);
   }
 
@@ -444,6 +475,9 @@ export default function MountsPage() {
         }
       }
       await MountsController.update(editId, payload);
+      if (editEnabled !== editOriginalEnabled) {
+        await MountsController.action(editEnabled ? "enable" : "disable", editId);
+      }
       setIsEditModalOpen(false);
       toast.success(t("mounts.updated"));
       await fetchMounts();
@@ -474,11 +508,11 @@ export default function MountsPage() {
     <div className="h-full w-full p-2 md:p-4">
       <div
         className={clsx(
-          "mb-4 flex flex-col md:flex-row items-stretch md:items-center gap-4 sticky top-14 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors",
+          "mb-4 flex flex-row items-center gap-2 sticky top-2 z-10 backdrop-blur-sm shadow-sm py-2 px-4 rounded-sm transition-colors",
           hasBackground ? "bg-white/20 dark:bg-black/10 border border-white/40 dark:border-white/10" : "bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10"
         )}
       >
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
           <ShadowTooltip content={t("common.refresh")}><Button aria-label={t("common.refresh")} radius="sm" color="primary" size="sm" isIconOnly variant="flat" onPress={() => void fetchMounts()} isLoading={loading} className="text-lg min-w-8">
             <FiRefreshCw />
           </Button></ShadowTooltip>
@@ -507,7 +541,7 @@ export default function MountsPage() {
             </>
           )}
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto shrink-0">
           <span className="mr-3 text-xs text-default-500 align-middle">{t("mounts.sessionLabel")}: {user?.is_root ? t("mounts.sessionRoot") : t("mounts.sessionUser")}</span>
           <Button radius="sm" color="primary" onPress={() => {
             setCreateConnectionVerified(false);
@@ -546,14 +580,20 @@ export default function MountsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Chip size="sm" variant="flat" color={m.shared_enabled ? "success" : "default"}>
-                      {m.shared_enabled ? t("mounts.on") : t("mounts.off")}
-                    </Chip>
+                    <Switch
+                      size="sm"
+                      isSelected={!!m.shared_enabled}
+                      isDisabled={!canManage(m) || togglingIds.has(m.id)}
+                      onValueChange={() => void toggleMountSharedEnabled(m)}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Chip size="sm" variant="flat" color={m.enabled ? "success" : "warning"}>
-                      {m.enabled ? t("common.enabled") : t("common.disabled")}
-                    </Chip>
+                    <Switch
+                      size="sm"
+                      isSelected={m.enabled}
+                      isDisabled={!canManage(m) || togglingIds.has(m.id)}
+                      onValueChange={() => void toggleMountEnabled(m)}
+                    />
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="text-xs">
@@ -563,7 +603,7 @@ export default function MountsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <ButtonGroup radius="sm" size="sm" variant="light">
+                    <div className="flex items-center gap-2">
                       {m.last_error && (
                         <Tooltip
                           content={<div className="max-w-[280px] whitespace-pre-wrap break-words text-xs">{m.last_error}</div>}
@@ -578,13 +618,6 @@ export default function MountsPage() {
                       )}
                       {canManage(m) && (
                         <>
-                          <Button
-                            size="sm"
-                            color={m.enabled ? "warning" : "success"}
-                            onPress={() => void toggleMountEnabled(m)}
-                          >
-                            {m.enabled ? t("common.disable") : t("common.enable")}
-                          </Button>
                           <ShadowTooltip content={t("mounts.editMount")}><Button aria-label={t("mounts.editMount")} size="sm" onPress={() => openEditModal(m)} isIconOnly><FiEdit2 /></Button></ShadowTooltip>
                           <ShadowTooltip content={t("common.delete")}><Button aria-label={t("common.delete")} size="sm" color="danger" variant="flat" onPress={() => void deleteMount(m)} isIconOnly><FiTrash2 /></Button></ShadowTooltip>
                           <Button
@@ -601,7 +634,7 @@ export default function MountsPage() {
                           </Button>
                         </>
                       )}
-                    </ButtonGroup>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -725,7 +758,16 @@ export default function MountsPage() {
                 <LargeGlassInput label={t("mounts.remoteRoot")} size="md" value={editRemoteRoot} onValueChange={setEditRemoteRoot} commitMode="blur" classNames={inputClassNames} />
               </fieldset>
             </div>
-            <Checkbox isSelected={editSharedEnabled} onValueChange={setEditSharedEnabled}>{t("mounts.sharedEnabledSwitch")}</Checkbox>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-default-700">{t("mounts.shared")}</span>
+                <Switch size="sm" isSelected={editSharedEnabled} onValueChange={setEditSharedEnabled} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-default-700">{t("mounts.status")}</span>
+                <Switch size="sm" isSelected={editEnabled} onValueChange={setEditEnabled} />
+              </div>
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button variant="flat" onPress={() => setIsEditModalOpen(false)}>{t("common.cancel")}</Button>

@@ -14,6 +14,25 @@ function persistUser(next: AuthUser | null): void {
   localStorage.setItem(AUTH_KEY, JSON.stringify(withLegacyAuthUser(next)));
 }
 
+type ProfileMe = Awaited<ReturnType<typeof ProfileController.me>>;
+
+/** 将资料接口字段映射为鉴权上下文字段，避免 avatar_url 等下划线字段在合并时丢失。 */
+function mapMeToAuthPatch(me: ProfileMe): Partial<AuthUser> {
+  return {
+    userId: me.userId,
+    username: me.username,
+    displayName: me.displayName,
+    role: me.role,
+    status: me.status,
+    qosProfile: me.qosProfile,
+    email: me.email,
+    phone: me.phone,
+    avatarUrl: me.avatar_url,
+    language: me.language,
+    fileViewMode: me.fileViewMode,
+  };
+}
+
 /** 鉴权上下文提供者：统一登录注册、会话刷新、资料回填与本地持久化。 */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => loadAuthUser());
@@ -40,17 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistAndSetUser(
           withLegacyAuthUser({
             ...refreshed,
-            userId: me.userId,
-            username: me.username,
-            displayName: me.displayName,
-            role: me.role,
-            status: me.status,
-            qosProfile: me.qosProfile,
-            email: me.email,
-            phone: me.phone,
-            avatarUrl: me.avatar_url,
-            language: me.language,
-            fileViewMode: me.fileViewMode,
+            ...mapMeToAuthPatch(me),
           })
         );
       } catch {
@@ -85,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!user?.refreshToken || !user.sessionId) return;
         const refreshed = await refreshReq(user.refreshToken, user.sessionId);
         const me = await ProfileController.me();
-        persistAndSetUser(withLegacyAuthUser({ ...user, ...refreshed, ...me }));
+        persistAndSetUser(withLegacyAuthUser({ ...user, ...refreshed, ...mapMeToAuthPatch(me) }));
       },
       updateLocalUser(patch: Partial<AuthUser>) {
         setUser((prev) => {
@@ -102,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistAndSetUser(withLegacyAuthUser(next));
         try {
           const me = await ProfileController.me();
-          persistAndSetUser(withLegacyAuthUser({ ...next, ...me }));
+          persistAndSetUser(withLegacyAuthUser({ ...next, ...mapMeToAuthPatch(me) }));
         } catch (error) {
           const message = error instanceof Error ? error.message : "";
           if (!message.includes("AUTH_REQUIRED")) {
@@ -126,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }));
         try {
           const me = await ProfileController.me();
-          persistAndSetUser(withLegacyAuthUser({ ...next, ...me }));
+          persistAndSetUser(withLegacyAuthUser({ ...next, ...mapMeToAuthPatch(me) }));
         } catch (error) {
           const message = error instanceof Error ? error.message : "";
           if (!message.includes("AUTH_REQUIRED")) {

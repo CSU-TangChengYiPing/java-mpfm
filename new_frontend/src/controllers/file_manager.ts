@@ -533,10 +533,21 @@ export default class FileManager {
   }
 
   public static pauseDownloadByTaskId(taskId: string): boolean {
-    const key = this.localDownloadTaskKeyById.get(taskId);
+    let key = this.localDownloadTaskKeyById.get(taskId);
+    if (!key) {
+      const parsed = this.parseLocalDownloadTaskKey(taskId);
+      if (parsed) {
+        key = this.downloadResumeKey(parsed.targetPath, parsed.mountId);
+        this.localDownloadTaskKeyById.set(taskId, key);
+      }
+    }
     if (!key) return false;
     const controller = this.activeDownloadControllers.get(key);
-    if (!controller) return false;
+    if (!controller) {
+      const status = (this.localDownloadTasks.get(taskId)?.status || "").toUpperCase();
+      if (status === "PAUSED" || status === "SUCCESS" || status === "FAILED" || status === "CANCELED") return true;
+      return false;
+    }
     controller.abort();
     return true;
   }
@@ -545,6 +556,10 @@ export default class FileManager {
     const task = this.localDownloadTasks.get(taskId);
     if (!task || !task.target) {
       throw new APIError("download task not resumable", "TASK_NOT_FOUND");
+    }
+    const parsed = this.parseLocalDownloadTaskKey(taskId);
+    if (parsed) {
+      return this.downloadWithProgress(parsed.targetPath, parsed.mountId);
     }
     return this.downloadWithProgress(task.target);
   }
@@ -732,6 +747,25 @@ export default class FileManager {
 
   private static localDownloadTaskId(key: string): string {
     return `download-local-${encodeURIComponent(key)}`;
+  }
+
+  private static parseLocalDownloadTaskKey(taskId: string): { mountId?: string; targetPath: string } | null {
+    if (!taskId.startsWith("download-local-")) return null;
+    const encoded = taskId.slice("download-local-".length);
+    if (!encoded) return null;
+    let decoded = "";
+    try {
+      decoded = decodeURIComponent(encoded);
+    } catch {
+      return null;
+    }
+    const sep = decoded.indexOf("::");
+    if (sep <= 0) return null;
+    const mountPart = decoded.slice(0, sep);
+    const targetPath = decoded.slice(sep + 2);
+    if (!targetPath) return null;
+    const mountId = mountPart === "default" ? undefined : mountPart;
+    return { mountId, targetPath };
   }
 
   private static upsertLocalDownloadTask(taskId: string, record: DownloadResumeRecord, status: string, errorCode: string): void {

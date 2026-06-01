@@ -61,8 +61,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
       <div
         ref={contentRef}
-        className={clsx("relative z-10 flex-1 min-h-0 overflow-hidden pb-0 transition-all duration-300 ease-in-out")}
-        style={{ scrollbarGutter: "stable" }}
+        className={clsx("relative z-10 flex flex-1 min-h-0 flex-col overflow-hidden pb-0 transition-all duration-300 ease-in-out")}
       >
         <div
           className={clsx(
@@ -87,7 +86,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             ))}
           </Breadcrumbs>
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {children}
+        </div>
       </div>
       <BlurModal
         isOpen={pendingResumeCount > 0}

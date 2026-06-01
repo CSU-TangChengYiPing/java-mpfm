@@ -10,6 +10,7 @@ import { LargeGlassInput } from "../../../components/common/LargeGlassField";
 import PermissionLevelSelector from "../../../components/common/PermissionLevelSelector";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import type { MountInfo, ShareRoleTemplate } from "../../../controllers/mounts";
+import { pickSingleSelectKey } from "./selectKey";
 
 type Row = ShareRoleTemplate & { key: string };
 type PermState = {
@@ -64,16 +65,15 @@ export default function RoleTemplatesPanel({
   loading: boolean;
   rows: Row[];
   onMountChange: (v: string) => void;
-  onCreateRoleTemplate: (id: string, name: string, permissions: string[]) => void;
+  onCreateRoleTemplate: (name: string, permissions: string[]) => void;
   onUpdateRoleTemplate: (id: string, name: string, permissions: string[]) => void;
   onDeleteRoleTemplate: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [newRoleID, setNewRoleID] = useState("");
   const [newRoleName, setNewRoleName] = useState("");
-  const [editRoleID, setEditRoleID] = useState("");
+  const [editTemplateID, setEditTemplateID] = useState("");
   const [editRoleName, setEditRoleName] = useState("");
   const [createPerm, setCreatePerm] = useState<PermState>({ visible: true, read: true, write: false });
   const [editPerm, setEditPerm] = useState<PermState>({ visible: true, read: true, write: false });
@@ -83,7 +83,7 @@ export default function RoleTemplatesPanel({
     const visible = row.defaultVisible ?? set.has("visible");
     const read = row.defaultRead ?? set.has("read");
     const write = row.defaultWrite ?? set.has("write");
-    setEditRoleID(row.id);
+    setEditTemplateID(row.templateId || row.id);
     setEditRoleName(row.name || row.id);
     setEditPerm({
       visible,
@@ -95,25 +95,29 @@ export default function RoleTemplatesPanel({
 
   return (
     <>
-      <div className="rounded-sm border border-white/40 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/40 flex items-center justify-between">
-        <Select className="max-w-md" label={t("shares.mountLabel")} selectedKeys={selectedMountID ? [selectedMountID] : []} onSelectionChange={(keys) => onMountChange(String(Array.from(keys)[0] ?? ""))}>
-          {manageableMounts.map((m) => <SelectItem key={m.id}>{`${m.name} (${m.id})`}</SelectItem>)}
-        </Select>
-        <Button color="secondary" startContent={<FiPlus />} onPress={() => setCreateOpen(true)} isDisabled={!selectedMountID}>{t("shares.addRoleButton")}</Button>
+      <div className="rounded-sm border border-white/40 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/40">
+        <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex w-full items-center gap-2 md:max-w-md">
+          <span className="w-16 shrink-0 text-xs text-default-600">{t("shares.mountLabel")}</span>
+          <Select size="sm" className="min-w-0 flex-1" classNames={{ trigger: "h-8 min-h-8", value: "text-xs" }} aria-label={t("shares.mountLabel")} selectedKeys={selectedMountID ? [selectedMountID] : []} onSelectionChange={(keys) => onMountChange(pickSingleSelectKey(keys as "all" | Set<string | number>))}>
+            {manageableMounts.map((m) => <SelectItem key={m.id}>{`${m.name} (${m.id})`}</SelectItem>)}
+          </Select>
+        </div>
+        <Button className="w-full md:w-auto" color="secondary" startContent={<FiPlus />} onPress={() => setCreateOpen(true)} isDisabled={!selectedMountID}>{t("shares.addRoleButton")}</Button>
+        </div>
       </div>
       <PaginatedTableShell
         ariaLabel="role-list"
-        wrapperClassName="h-[calc(100vh-360px)]"
+        wrapperClassName="min-h-[400px]"
         rows={rows}
         loading={loading}
         totalLabel={(n) => t("shares.totalRoles", { count: n })}
         emptyContent={t("shares.emptyRoles")}
-        header={<><TableColumn key="id">ID</TableColumn><TableColumn key="name">{t("shares.nameColumn")}</TableColumn><TableColumn key="permissions">{t("shares.permissionColumn")}</TableColumn><TableColumn key="builtin">{t("shares.builtinColumn")}</TableColumn><TableColumn key="actions">{t("common.actions")}</TableColumn></>}
+        header={<><TableColumn key="name">{t("shares.nameColumn")}</TableColumn><TableColumn key="permissions">{t("shares.permissionColumn")}</TableColumn><TableColumn key="builtin">{t("shares.builtinColumn")}</TableColumn><TableColumn key="actions">{t("common.actions")}</TableColumn></>}
         renderRow={(it) => {
           const permSet = new Set((it.permissions ?? []).map((p) => normalizePermName(p)));
           return (
             <TableRow key={it.key}>
-              <TableCell>{it.id}</TableCell>
               <TableCell>{it.name}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
@@ -151,14 +155,12 @@ export default function RoleTemplatesPanel({
         onClose={() => setCreateOpen(false)}
         title={t("shares.addRoleButton")}
         onSubmit={() => {
-          onCreateRoleTemplate(newRoleID, newRoleName || newRoleID, toPerms(createPerm));
+          onCreateRoleTemplate(newRoleName, toPerms(createPerm));
           setCreateOpen(false);
-          setNewRoleID("");
           setNewRoleName("");
         }}
         submitText={t("common.create")}
       >
-        <LargeGlassInput label={t("shares.roleIdLabel")} value={newRoleID} onValueChange={setNewRoleID} commitMode="blur" />
         <LargeGlassInput label={t("shares.roleNameLabel")} value={newRoleName} onValueChange={setNewRoleName} commitMode="blur" />
         <PermissionLevelSelector level={toPermLevel(createPerm) as 0 | 1 | 2 | 3} onChange={(level) => setCreatePerm(fromPermLevel(level))} />
       </FormModal>
@@ -166,9 +168,9 @@ export default function RoleTemplatesPanel({
       <FormModal
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
-        title={t("shares.editRoleTitle", { roleId: editRoleID })}
+        title={t("shares.editRoleTitle", { roleName: editRoleName })}
         onSubmit={() => {
-          onUpdateRoleTemplate(editRoleID, editRoleName || editRoleID, toPerms(editPerm));
+          onUpdateRoleTemplate(editTemplateID, editRoleName, toPerms(editPerm));
           setEditOpen(false);
         }}
         submitText={t("common.save")}

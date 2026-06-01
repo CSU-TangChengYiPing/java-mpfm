@@ -143,9 +143,9 @@ export default function PaginatedTableShell<T extends { key: string }>({
       aria-label={ariaLabel}
       isHeaderSticky
       classNames={{ ...sharedGlassTableClassNames, wrapper: clsx(sharedGlassTableClassNames.wrapper, wrapperClassName) }}
-      topContentPlacement="outside"
+      // topContentPlacement="outside"
       bottomContentPlacement="outside"
-      topContent={<div className="h-1" />}
+      // topContent={<div className="h-1" />}
       sortDescriptor={sortDescriptor}
       onSortChange={onSortChange}
       selectionMode={selectionMode}
