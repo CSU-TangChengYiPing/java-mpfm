@@ -23,6 +23,42 @@ import { resolveShareError } from "./shares/errorPresentation";
 
 type Selection = Set<string | number> | "all";
 type SubPage = "roles" | "role-perm" | "shares" | "audit";
+type SharesTransientSelection = {
+  selectedMountID: string;
+  grantRole: string;
+};
+
+const SHARES_SELECTION_SESSION_KEY = "shares.selection.v1";
+
+const sharesTransientSelectionMemory: SharesTransientSelection = {
+  selectedMountID: "",
+  grantRole: "",
+};
+
+function readSharesSelectionFromSession(): SharesTransientSelection {
+  if (typeof window === "undefined") return { selectedMountID: "", grantRole: "" };
+  try {
+    const raw = window.sessionStorage.getItem(SHARES_SELECTION_SESSION_KEY);
+    if (!raw) return { selectedMountID: "", grantRole: "" };
+    const parsed = JSON.parse(raw) as Partial<SharesTransientSelection>;
+    return {
+      selectedMountID: typeof parsed.selectedMountID === "string" ? parsed.selectedMountID : "",
+      grantRole: typeof parsed.grantRole === "string" ? parsed.grantRole : "",
+    };
+  } catch {
+    return { selectedMountID: "", grantRole: "" };
+  }
+}
+
+function writeSharesSelectionToSession(selection: SharesTransientSelection) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(SHARES_SELECTION_SESSION_KEY, JSON.stringify(selection));
+  } catch {
+    // ignore write failure
+  }
+}
+
 const subPages: SubPage[] = ["roles", "role-perm", "shares", "audit"];
 const subPageRoute: Record<SubPage, string> = {
   roles: "/app/shares/roles",
@@ -180,9 +216,12 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const sessionSelection = readSharesSelectionFromSession();
 
   const [mounts, setMounts] = useState<MountInfo[]>([]);
-  const [selectedMountID, setSelectedMountID] = useState("");
+  const [selectedMountID, setSelectedMountID] = useState(
+    sharesTransientSelectionMemory.selectedMountID || sessionSelection.selectedMountID
+  );
 
   const [loading, setLoading] = useState(false);
   const [shares, setShares] = useState<ShareInfo[]>([]);
@@ -198,7 +237,7 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
   const [autoApplyToken, setAutoApplyToken] = useState("");
   const [myRoles, setMyRoles] = useState<ShareMyRoleInfo[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
-  const [grantRole, setGrantRole] = useState("");
+  const [grantRole, setGrantRole] = useState(sharesTransientSelectionMemory.grantRole || sessionSelection.grantRole);
   const [rolePermMode, setRolePermMode] = useState<"edit" | "preview">("edit");
   const [selectionModeEnabled, setSelectionModeEnabled] = useState(false);
   const [formError, setFormError] = useState("");
@@ -427,6 +466,10 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
   }, [loadBrowseFiles, rolePermMode, subPage]);
 
   useEffect(() => {
+    if (grantRole === "undefined" || grantRole === "null") {
+      setGrantRole("");
+      return;
+    }
     if (!grantRole) {
       setTemplatePrivileges([]);
       return;
@@ -442,11 +485,38 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
   }, [grantRole]);
 
   useEffect(() => {
+    sharesTransientSelectionMemory.selectedMountID = selectedMountID;
+    writeSharesSelectionToSession({
+      selectedMountID,
+      grantRole,
+    });
+  }, [grantRole, selectedMountID]);
+
+  useEffect(() => {
+    sharesTransientSelectionMemory.grantRole = grantRole;
+    writeSharesSelectionToSession({
+      selectedMountID,
+      grantRole,
+    });
+  }, [grantRole, selectedMountID]);
+
+  useEffect(() => {
     const tokenFromUrl = searchParams.get("shareToken")?.trim();
     if (!tokenFromUrl) return;
     setResolveToken(tokenFromUrl);
     setAutoApplyToken(tokenFromUrl);
   }, [searchParams]);
+
+  useEffect(() => {
+    const mountIdFromUrl = (searchParams.get("mountId") || "").trim();
+    const roleIdFromUrl = (searchParams.get("roleId") || "").trim();
+    if (mountIdFromUrl && mountIdFromUrl !== selectedMountID) {
+      setSelectedMountID(mountIdFromUrl);
+    }
+    if (roleIdFromUrl && roleIdFromUrl !== grantRole) {
+      setGrantRole(roleIdFromUrl);
+    }
+  }, [grantRole, searchParams, selectedMountID]);
 
   useEffect(() => {
     if (!autoApplyToken) return;
@@ -465,9 +535,38 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
     })();
   }, [autoApplyToken, loadShareData, t]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const currentMountId = (params.get("mountId") || "").trim();
+    const currentRoleId = (params.get("roleId") || "").trim();
+    let changed = false;
+    if (selectedMountID) {
+      if (currentMountId !== selectedMountID) {
+        params.set("mountId", selectedMountID);
+        changed = true;
+      }
+    } else if (currentMountId) {
+      params.delete("mountId");
+      changed = true;
+    }
+    if (grantRole) {
+      if (currentRoleId !== grantRole) {
+        params.set("roleId", grantRole);
+        changed = true;
+      }
+    } else if (currentRoleId) {
+      params.delete("roleId");
+      changed = true;
+    }
+    if (!changed) return;
+    const query = params.toString();
+    navigate(`${location.pathname}${query ? `?${query}` : ""}`, { replace: true });
+  }, [grantRole, location.pathname, location.search, navigate, selectedMountID]);
+
   function updateSubPage(next: SubPage) {
     const params = new URLSearchParams();
     if (selectedMountID) params.set("mountId", selectedMountID);
+    if (grantRole) params.set("roleId", grantRole);
     const suffix = params.toString();
     navigate(`${subPageRoute[next]}${suffix ? `?${suffix}` : ""}`);
   }
@@ -601,7 +700,19 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
     try {
       setFormError("");
       setFieldError("");
-      await MountsController.updateRole(roleID.trim(), { name: roleName.trim() || roleID.trim() });
+      const target = roleTemplates.find((item) => item.id === roleID || item.roleId === roleID);
+      const templateId = (target?.templateId || "").trim();
+      if (!templateId) {
+        toast.error(t("shares.roleUpdateFailed"));
+        return;
+      }
+      await MountsController.updateRoleTemplateV5({
+        templateId,
+        name: roleName.trim() || roleID.trim(),
+        defaultVisible: permissions.includes("visible"),
+        defaultRead: permissions.includes("read"),
+        defaultWrite: permissions.includes("write"),
+      });
       toast.success(t("shares.roleUpdated"));
       await loadShareData(selectedMountID);
     } catch (err) {
