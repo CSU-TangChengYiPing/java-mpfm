@@ -21,6 +21,7 @@ import com.mpfm.backend.common.error.BusinessException;
 import com.mpfm.backend.common.error.ErrorCode;
 import com.mpfm.backend.common.logging.RequestCorrelationFilter;
 import com.mpfm.backend.common.security.JwtTokenService;
+import com.mpfm.backend.common.security.WebDavUserCacheService;
 import com.mpfm.backend.infrastructure.persistence.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,8 @@ class AdminDebugLogStreamControllerWebMvcTests {
     private JwtTokenService jwtTokenService;
     @MockitoBean
     private SecurityPolicyService securityPolicyService;
+    @MockitoBean
+    private WebDavUserCacheService webDavUserCacheService;
     @MockitoBean
     private DebugLogStreamService debugLogStreamService;
 

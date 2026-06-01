@@ -15,8 +15,10 @@ import com.mpfm.backend.application.audit.BackendLogReadService;
 import com.mpfm.backend.application.security.SecurityPolicyService;
 import com.mpfm.backend.common.audit.SecurityEventLogger;
 import com.mpfm.backend.common.logging.RequestCorrelationFilter;
+import com.mpfm.backend.common.security.WebDavUserCacheService;
 import com.mpfm.backend.common.security.JwtTokenService;
 import com.mpfm.backend.infrastructure.persistence.repository.UserRepository;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -49,6 +51,8 @@ class AdminLogsControllerWebMvcTests {
     @MockitoBean
     private JwtTokenService jwtTokenService;
     @MockitoBean
+    private WebDavUserCacheService webDavUserCacheService;
+    @MockitoBean
     private BackendLogReadService backendLogReadService;
     @MockitoBean
     private SecurityPolicyService securityPolicyService;
@@ -71,8 +75,10 @@ class AdminLogsControllerWebMvcTests {
 
     @Test
     void shouldReturnLogsForRoot() throws Exception {
-        given(backendLogReadService.logFile()).willReturn("./logs/mpfm-backend.log");
-        given(backendLogReadService.readTailLines(10)).willReturn(java.util.List.of("line-1", "line-2"));
+        Path logPath = Path.of("./logs/mpfm-backend.log").toAbsolutePath().normalize();
+        given(backendLogReadService.resolveLogPath(null)).willReturn(java.util.Optional.of(logPath));
+        given(backendLogReadService.logExists(logPath)).willReturn(true);
+        given(backendLogReadService.readTailLines(logPath, 10)).willReturn(java.util.List.of("line-1", "line-2"));
         mockMvc.perform(get("/api/v1/admin/logs")
                         .with(user("root").roles("ROOT"))
                         .param("max_lines", "10"))

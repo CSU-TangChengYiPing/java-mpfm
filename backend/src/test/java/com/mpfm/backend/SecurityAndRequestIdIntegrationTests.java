@@ -12,6 +12,7 @@ import com.mpfm.backend.common.audit.SecurityEventLogger;
 import com.mpfm.backend.common.logging.RequestCorrelationFilter;
 import com.mpfm.backend.adapter.api.config.SecurityConfig;
 import com.mpfm.backend.application.security.SecurityPolicyService;
+import com.mpfm.backend.common.security.WebDavUserCacheService;
 import com.mpfm.backend.common.security.JwtTokenService;
 import com.mpfm.backend.infrastructure.persistence.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,8 @@ import org.springframework.test.web.servlet.MockMvc;
         "security.jwt.issuer=test",
         "security.jwt.access-token-expire-seconds=600",
         "security.jwt.refresh-token-expire-seconds=3600",
-        "security.jwt.signing-key=0123456789abcdef0123456789abcdef"
+        "security.jwt.signing-key=0123456789abcdef0123456789abcdef",
+        "mpfm.security.dev-cert-path=./certs/__missing_for_test__.cer"
 })
 class SecurityAndRequestIdIntegrationTests {
 
@@ -38,6 +40,8 @@ class SecurityAndRequestIdIntegrationTests {
     private UserRepository userRepository;
     @MockitoBean
     private JwtTokenService jwtTokenService;
+    @MockitoBean
+    private WebDavUserCacheService webDavUserCacheService;
     @MockitoBean
     private SecurityPolicyService securityPolicyService;
 

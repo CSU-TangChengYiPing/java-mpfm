@@ -16,6 +16,7 @@ import com.mpfm.backend.application.security.SecurityPolicyService;
 import com.mpfm.backend.application.user.UserManagementService;
 import com.mpfm.backend.common.audit.SecurityEventLogger;
 import com.mpfm.backend.common.logging.RequestCorrelationFilter;
+import com.mpfm.backend.common.security.WebDavUserCacheService;
 import com.mpfm.backend.common.security.JwtTokenService;
 import com.mpfm.backend.infrastructure.persistence.repository.UserRepository;
 import java.util.List;
@@ -52,6 +53,8 @@ class AdminUserControllerWebMvcTests {
     private UserRepository userRepository;
     @MockitoBean
     private JwtTokenService jwtTokenService;
+    @MockitoBean
+    private WebDavUserCacheService webDavUserCacheService;
     @MockitoBean
     private SecurityPolicyService securityPolicyService;
     @MockitoBean

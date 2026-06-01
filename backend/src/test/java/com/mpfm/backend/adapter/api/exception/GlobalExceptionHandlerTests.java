@@ -11,6 +11,7 @@ import com.mpfm.backend.application.security.SecurityPolicyService;
 import com.mpfm.backend.common.audit.SecurityEventLogger;
 import com.mpfm.backend.common.logging.RequestCorrelationFilter;
 import com.mpfm.backend.common.security.JwtTokenService;
+import com.mpfm.backend.common.security.WebDavUserCacheService;
 import com.mpfm.backend.infrastructure.persistence.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,8 @@ class GlobalExceptionHandlerTests {
     private JwtTokenService jwtTokenService;
     @MockitoBean
     private SecurityPolicyService securityPolicyService;
+    @MockitoBean
+    private WebDavUserCacheService webDavUserCacheService;
 
     @Test
     @WithMockUser(username = "u1", roles = {"USER"})
