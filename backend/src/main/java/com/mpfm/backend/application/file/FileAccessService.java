@@ -128,10 +128,6 @@ public class FileAccessService {
         } else if (path.startsWith("./shared/")) {
             normalized = normalizeRelativePath(path.substring("./shared/".length()));
         }
-        if (normalized.contains("/")) {
-            int idx = normalized.indexOf('/');
-            normalized = idx >= 0 ? normalized.substring(idx + 1) : normalized;
-        }
         if (normalized.isBlank()) {
             normalized = CURRENT_DIR;
         }
