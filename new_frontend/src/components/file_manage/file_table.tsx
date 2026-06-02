@@ -352,7 +352,10 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
       <PaginatedTableShell
         key={currentPath}
         ariaLabel={t("fileManager.tableLabel")}
-        wrapperClassName={wrapperClassName}
+        wrapperClassName={clsx(
+          "min-h-[420px] !overflow-x-auto [&_table]:table-fixed [&_tbody_tr_td]:align-top [&_tbody_tr_td]:overflow-hidden",
+          wrapperClassName
+        )}
         rows={files.map((file) => ({ ...file, key: file.name }))}
         loading={loading}
         loadingContent={<div className="flex h-full items-center justify-center"><Spinner /></div>}
@@ -376,12 +379,12 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
               <Checkbox isSelected={allSelected} isIndeterminate={partiallySelected} onValueChange={toggleSelectAll} />
             </div>
           </TableColumn>
-          <TableColumn key="name" allowsSorting>{t("fileManager.name")}</TableColumn>
-          <TableColumn key="type" allowsSorting className="hidden md:table-cell">{t("fileManager.type")}</TableColumn>
-          <TableColumn key="size" allowsSorting className="hidden md:table-cell">{t("fileManager.size")}</TableColumn>
-          <TableColumn key="mtime" allowsSorting className="hidden md:table-cell">{t("fileManager.mtime")}</TableColumn>
-          <TableColumn key="perm" className="hidden md:table-cell">{t("fileManager.permission")}</TableColumn>
-          <TableColumn key="actions">{t("fileManager.actions")}</TableColumn>
+          <TableColumn key="name" allowsSorting width={320} minWidth={240} className="md:w-[34%]">{t("fileManager.name")}</TableColumn>
+          <TableColumn key="type" allowsSorting width={120} minWidth={96} className="hidden md:table-cell">{t("fileManager.type")}</TableColumn>
+          <TableColumn key="size" allowsSorting width={110} minWidth={96} className="hidden md:table-cell">{t("fileManager.size")}</TableColumn>
+          <TableColumn key="mtime" allowsSorting width={180} minWidth={160} className="hidden md:table-cell">{t("fileManager.mtime")}</TableColumn>
+          <TableColumn key="perm" width={132} minWidth={120} className="hidden md:table-cell">{t("fileManager.permission")}</TableColumn>
+          <TableColumn key="actions" width={220} minWidth={220} className="w-[160px]">{t("fileManager.actions")}</TableColumn>
           </>
         }
         renderRow={(file) => {
@@ -405,8 +408,17 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
                     <Checkbox isSelected={selectedSet.has(file.name)} onValueChange={() => toggleSelected(file.name)} />
                   </div>
                 </TableCell>
-                <TableCell onClick={() => openRow(file, filePath, ext)} className="cursor-pointer">
-                  {imageExts.includes(ext) ? <ImageNameButton name={file.name} onPreview={() => openRow(file, filePath, ext)} /> : <div className="flex items-center gap-2"><FileIcon name={file.name} isDirectory={file.isDirectory} /><span>{file.name}</span></div>}
+                <TableCell onClick={() => openRow(file, filePath, ext)} className="max-w-0 cursor-pointer overflow-hidden">
+                  {imageExts.includes(ext) ? (
+                    <ImageNameButton name={file.name} onPreview={() => openRow(file, filePath, ext)} />
+                  ) : (
+                    <div className="flex min-w-0 max-w-full items-center gap-2 overflow-hidden">
+                      <FileIcon name={file.name} isDirectory={file.isDirectory} />
+                      <span className="block min-w-0 max-w-full truncate" title={file.name}>
+                        {file.name}
+                      </span>
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell onClick={() => openRow(file, filePath, ext)} className="hidden cursor-pointer md:table-cell">{getVirtualTypeLabel(currentPath, file, resolveMountProtocol)}</TableCell>
                 <TableCell onClick={() => openRow(file, filePath, ext)} className="hidden cursor-pointer md:table-cell">{Number.isNaN(file.size) || file.isDirectory ? "-" : formatBytes(file.size)}</TableCell>

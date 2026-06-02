@@ -469,7 +469,7 @@ export const zh = {
         status: { pending: "待执行", running: "执行中", paused: "已暂停", success: "成功", failed: "失败", canceled: "已取消" }
       },
       fileManager: {
-        emptyTitle: "这里空空的，像刚打扫完的小房间", emptyDesc: "拖点文件进来吧，我们把它变热闹一点", renameTitle: "重命名", renameLabel: "新名称", moveTitle: "选择目标目录", moveCurrent: "当前选择", moveEmpty: "未选择",
+        emptyTitle: "这里空空的，像刚打扫完的小房间", emptyDesc: "拖点文件进来吧，我们把它变热闹一点", renameTitle: "重命名", renameLabel: "新名称", moveTitle: "选择目标目录", moveCurrent: "当前目录", moveEmpty: "未选择", moveEmptyDir: "这里没有子目录",
         moveItems: "移动项", createTitle: "新建", createTypeFile: "文件", createTypeDirectory: "目录", createNameLabel: "名称", cancel: "取消", confirm: "确定", create: "创建", tableLabel: "文件列表",
         pageSizeLabel: "每页", totalLabel: "共 {{count}} 项", selectionMode: "选择模式", name: "名称", type: "类型", size: "大小", mtime: "修改时间", actions: "操作", permission: "权限", detailTitle: "详情", unsupportedPreview: "暂不支持预览此文件类型",
         editFile: "编辑文件", editLoading: "正在加载文件内容...", pathRollback: "路径不存在，已回退到上一个可用路径", loadFailed: "加载文件列表失败", mountDisabled: "该挂载未启用，仅可见不可进入", unsupportedEditType: "该文件类型（{{ext}}）不支持在线编辑",

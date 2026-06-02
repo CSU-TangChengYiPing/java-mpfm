@@ -5,9 +5,11 @@ export const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".sv
 
 export default function ImageNameButton({ name, onPreview }: { name: string; onPreview: () => void }) {
   return (
-    <button type="button" className="flex w-full items-center gap-2 text-left" onClick={onPreview}>
+    <button type="button" className="flex w-full min-w-0 items-center gap-2 overflow-hidden text-left" onClick={onPreview}>
       <FileIcon name={name} isDirectory={false} />
-      <span>{name}</span>
+      <span className="block min-w-0 max-w-full truncate" title={name}>
+        {name}
+      </span>
     </button>
   );
 }

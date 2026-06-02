@@ -535,7 +535,7 @@ export default function FileManagerPage() {
   // 处理移动文件点击事件
   const handleMoveClick = (filePath: string) => {
     setRenamingFile(filePath);
-    setMoveTargetPath("");
+    setMoveTargetPath(currentPath);
     setIsMoveModalOpen(true);
   };
 
@@ -918,7 +918,7 @@ export default function FileManagerPage() {
           {((selectedFiles instanceof Set && selectedFiles.size > 0) || selectedFiles === "all") && (
             <>
               <Button radius="sm" color="danger" size="sm" variant="flat" onPress={() => void handleBatchDelete()} className="text-sm px-2 min-w-fit" startContent={<TbTrash className="text-lg" />}>({selectedFiles instanceof Set ? selectedFiles.size : files.length})</Button>
-              <Button radius="sm" color="warning" size="sm" variant="flat" onPress={() => { setMoveTargetPath(""); setIsMoveModalOpen(true); }} className="text-sm px-2 min-w-fit" startContent={<FiMove className="text-lg" />}>({selectedFiles instanceof Set ? selectedFiles.size : files.length})</Button>
+              <Button radius="sm" color="warning" size="sm" variant="flat" onPress={() => { setMoveTargetPath(currentPath); setIsMoveModalOpen(true); }} className="text-sm px-2 min-w-fit" startContent={<FiMove className="text-lg" />}>({selectedFiles instanceof Set ? selectedFiles.size : files.length})</Button>
               <Button radius="sm" color="secondary" size="sm" variant="flat" onPress={() => void handleBatchDownload()} className="text-sm px-2 min-w-fit" startContent={<FiDownload className="text-lg" />}>({selectedFiles instanceof Set ? selectedFiles.size : files.length})</Button>
             </>
           )}
@@ -1011,7 +1011,18 @@ export default function FileManagerPage() {
       />
       <CreateFileModal isOpen={isCreateModalOpen} fileType={fileType} newFileName={newFileName} onTypeChange={setFileType} onNameChange={setNewFileName} onClose={() => setIsCreateModalOpen(false)} onCreate={() => void handleCreate()} />
       <RenameModal isOpen={isRenameModalOpen} newFileName={newFileName} onNameChange={setNewFileName} onClose={() => setIsRenameModalOpen(false)} onRename={() => void handleRename()} />
-      <MoveModal isOpen={isMoveModalOpen} moveTargetPath={moveTargetPath} selectionInfo={selectedFiles instanceof Set && selectedFiles.size > 0 ? t("fileManager.itemsCount", { count: selectedFiles.size }) : path.basename(renamingFile)} onClose={() => setIsMoveModalOpen(false)} onMove={() => (selectedFiles instanceof Set && selectedFiles.size > 0 ? void handleBatchMove() : void handleMove(renamingFile))} onSelect={(dir) => setMoveTargetPath(dir)} />
+      <MoveModal
+        isOpen={isMoveModalOpen}
+        moveTargetPath={moveTargetPath}
+        selectionInfo={selectedFiles instanceof Set && selectedFiles.size > 0 ? t("fileManager.itemsCount", { count: selectedFiles.size }) : path.basename(renamingFile)}
+        onClose={() => {
+          setIsMoveModalOpen(false);
+          setMoveTargetPath("");
+          setRenamingFile("");
+        }}
+        onMove={() => (selectedFiles instanceof Set && selectedFiles.size > 0 ? void handleBatchMove() : void handleMove(renamingFile))}
+        onSelect={(dir) => setMoveTargetPath(dir)}
+      />
     </div>
   );
 }

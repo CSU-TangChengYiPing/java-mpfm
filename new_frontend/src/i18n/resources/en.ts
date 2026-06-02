@@ -450,8 +450,7 @@ export const en = {
         status: { pending: "Pending", running: "Running", paused: "Paused", success: "Success", failed: "Failed", canceled: "Canceled" }
       },
       fileManager: {
-        emptyTitle: "It is empty here, like a freshly cleaned little room", emptyDesc: "Drop some files here and let's make it lively", renameTitle: "Rename", renameLabel: "New name", moveTitle: "Select target directory",
-        moveCurrent: "Current selection", moveEmpty: "Not selected", moveItems: "Moving", createTitle: "Create", createTypeFile: "File", createTypeDirectory: "Directory", createNameLabel: "Name", cancel: "Cancel", confirm: "Confirm",
+        emptyTitle: "It is empty here, like a freshly cleaned little room", emptyDesc: "Drop some files here and let's make it lively", renameTitle: "Rename", renameLabel: "New name", moveTitle: "Select target directory", moveCurrent: "Current folder", moveEmpty: "Not selected", moveEmptyDir: "No subfolders here", moveItems: "Moving", createTitle: "Create", createTypeFile: "File", createTypeDirectory: "Directory", createNameLabel: "Name", cancel: "Cancel", confirm: "Confirm",
         create: "Create", tableLabel: "File list", pageSizeLabel: "Per page", totalLabel: "{{count}} total", selectionMode: "Selection mode", name: "Name", type: "Type", size: "Size", mtime: "Modified", actions: "Actions", permission: "Permissions", detailTitle: "Details",
         unsupportedPreview: "Preview is not supported for this file type", editFile: "Edit file", editLoading: "Loading file content...", pathRollback: "Path not found. Rolled back to last valid path.", loadFailed: "Failed to load file list", mountDisabled: "Mount is disabled",
         unsupportedEditType: "This file type ({{ext}}) cannot be edited online", fileTooLarge: "File too large (>{{max}} bytes) for online edit", openFailed: "Failed to open file", confirmDelete: "Delete file {{path}}?", nameRequired: "Name is required",
