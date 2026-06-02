@@ -21,13 +21,13 @@ export default function SharedUsersPanel({
   selectedMountID,
   manageableMounts,
   shareRole,
+  shareRoleList,
   expiresAt,
   roleExpiresAt,
   maxUses,
   resolveToken,
   myRoles,
   grantedRoleOptions,
-  presetRoleList,
   roleNameMap,
   loading,
   rows,
@@ -48,12 +48,12 @@ export default function SharedUsersPanel({
 }: {
   selectedMountID: string;
   manageableMounts: MountInfo[];
-  presetRoleList: string[];
   roleNameMap: Map<string, string>;
   loading: boolean;
   rows: Row[];
   onMountChange: (v: string) => void;
   shareRole: string;
+  shareRoleList: string[];
   expiresAt: string;
   roleExpiresAt: string;
   maxUses: string;
@@ -91,11 +91,11 @@ export default function SharedUsersPanel({
   const roleDatetimeValue = useMemo(() => (roleExpiresAt ? roleExpiresAt.slice(0, 16) : ""), [roleExpiresAt]);
   const selectableRoles = useMemo(
     () =>
-      presetRoleList.filter((roleId) => {
+      shareRoleList.filter((roleId) => {
         const label = (roleNameMap.get(roleId) || roleId).trim().toLowerCase();
         return roleId !== "owner" && label !== "owner" && label !== "所有者";
       }),
-    [presetRoleList, roleNameMap]
+    [roleNameMap, shareRoleList]
   );
   useEffect(() => {
     if (!createOpen) return;

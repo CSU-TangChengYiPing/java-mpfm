@@ -101,6 +101,14 @@ export function buildRoleNameMap(roleTemplates: ShareRoleTemplate[], myRoles: Sh
   return map;
 }
 
+/** 共享链接创建下拉只认 `share_roles.id`，这里单独抽出角色 ID 列表，避免误传 templateId。 */
+export function buildShareLinkRoleList(roleTemplates: ShareRoleTemplate[]): string[] {
+  return roleTemplates
+    .filter((r) => (r.name || "").trim().toLowerCase() !== "owner" && (r.name || "").trim() !== "所有者")
+    .map((r) => (r.roleId || r.id || "").trim())
+    .filter((id) => !!id);
+}
+
 function normalizeAbsPath(p: string): string {
   const x = (p || "/").trim().replace(/\\/g, "/");
   const y = x.startsWith("/") ? x : `/${x}`;
@@ -224,7 +232,7 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
   const [roleTemplates, setRoleTemplates] = useState<ShareRoleTemplate[]>([]);
   const [templatePrivileges, setTemplatePrivileges] = useState<ShareTemplatePrivilegeInfo[]>([]);
 
-  const [shareRole, setShareRole] = useState("visitor");
+  const [shareRole, setShareRole] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [roleExpiresAt, setRoleExpiresAt] = useState("");
   const [maxUses, setMaxUses] = useState("100");
@@ -288,6 +296,7 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
       .map((r) => (r.templateId || "").trim())
       .filter((id) => !!id);
   }, [roleTemplates]);
+  const shareRoleList = useMemo(() => buildShareLinkRoleList(roleTemplates), [roleTemplates]);
   const grantedRoleOptions = useMemo(
     () => roleTemplates.map((r) => ({ roleId: (r.roleId || r.id || "").trim(), name: (r.name || r.id || "").trim() })).filter((r) => !!r.roleId),
     [roleTemplates]
@@ -373,7 +382,12 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
       setMyRoles(myRoleList);
       const nonOwnerTemplate = roleList.find((r) => (r.name || "").trim().toLowerCase() !== "owner");
       const nextTemplateId = nonOwnerTemplate?.templateId || "";
+      const nextShareRoleId = nonOwnerTemplate?.roleId || nonOwnerTemplate?.id || "";
       setGrantRole((prev) => (prev && roleList.some((r) => r.templateId === prev) ? prev : nextTemplateId));
+      setShareRole((prev) => {
+        if (prev && roleList.some((r) => (r.roleId || r.id) === prev)) return prev;
+        return nextShareRoleId;
+      });
       if (nextTemplateId) {
         const privileges = await MountsController.listRoleTemplatePrivilegesV5(nextTemplateId);
         setTemplatePrivileges(privileges);
@@ -832,13 +846,13 @@ export default function SharesPage({ forcedSubPage }: { forcedSubPage?: SubPage 
           selectedMountID={selectedMountID}
           manageableMounts={manageableMounts}
           shareRole={shareRole}
+          shareRoleList={shareRoleList}
           expiresAt={expiresAt}
           roleExpiresAt={roleExpiresAt}
           maxUses={maxUses}
           resolveToken={resolveToken}
           myRoles={myRoles}
           grantedRoleOptions={grantedRoleOptions}
-          presetRoleList={presetRoleList}
           roleNameMap={roleNameMap}
           loading={loading}
           rows={shareRows}
