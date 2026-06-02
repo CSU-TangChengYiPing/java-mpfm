@@ -99,6 +99,12 @@ MPFM_TLS_KEY_ALIAS=mpfm-local
 MPFM_TLS_ENABLED_PROTOCOLS=TLSv1.3,TLSv1.2
 ```
 
+说明：
+- 这组配置只适合本地开发或内网联调。
+- 生产环境的证书 SAN 必须包含用户实际访问的域名，必要时再加公网 IP；不要继续只用 `localhost`、`mpfm.local`、`127.0.0.1`。
+- 如果前面有 Nginx / 反向代理 / Ingress，优先把正式证书放在入口层，后端只保留内网访问即可。
+- 若后端直接对外提供 HTTPS，请把 `MPFM_TLS_KEYSTORE_PATH`、`MPFM_TLS_KEYSTORE_PASSWORD`、`MPFM_TLS_KEY_ALIAS` 改成生产证书对应值。
+
 前端也要同步后端地址（`new_frontend/.env` 或 `.env.local`）：
 
 ```env
@@ -131,6 +137,10 @@ VITE_DEV_HTTPS_PFX_PASSPHRASE=请替换为你的证书口令
 - 输出证书关键校验信息（别名、有效期、SHA256 指纹、SAN）
 - 运行时提示手动输入 `StorePass`（不回显）
 
+注意：
+- 当前脚本默认只生成适合本地开发的 SAN：`mpfm.local`、`localhost`、`127.0.0.1`。
+- 生产环境请使用真实域名重新生成证书，或者交由企业 CA / 公网 CA 签发。
+
 你也可以手动复核：
 
 ```powershell
@@ -159,7 +169,27 @@ keytool -exportcert `
 </details>
 
 <details>
-  <summary><strong>5) 生成前端开发证书并校验（Windows / PowerShell）</strong></summary>
+  <summary><strong>5) WebDAV 连接方式（Windows / Finder）</strong></summary>
+
+当前后端默认可用地址：
+- 后端基址：`https://localhost:8443`
+- WebDAV 根路径：`https://localhost:8443/dav/`
+- 单个挂载目录示例：`https://localhost:8443/dav/personal/坚果云`
+
+证书说明：
+- 当前后端证书已包含 `localhost`、`mpfm.local`、`127.0.0.1` 三个 SAN。
+- 如果系统提示证书不受信任，请先确认已导入 `backend/certs/mpfm-local.cer` 到“受信任的根证书颁发机构”。
+
+连接时建议直接使用 HTTPS，不要改成 HTTP。
+- Windows 资源管理器 / WebDAV 客户端可直接填：`https://localhost:8443/dav/personal/坚果云`
+- macOS Finder 可直接连接：`https://localhost:8443/dav/personal/坚果云`
+- 账号密码使用项目登录账号；当前联调默认可用账号为 `a123 / a123`
+
+如果仍然卡在“连接中”，优先查看：`backend/logs/mpfm-backend.log`
+</details>
+
+<details>
+  <summary><strong>6) 生成前端开发证书并校验（Windows / PowerShell）</strong></summary>
 
 ```powershell
 .\scripts\ps1\gen-frontend-dev-cert.ps1

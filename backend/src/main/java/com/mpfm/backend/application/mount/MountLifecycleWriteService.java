@@ -93,7 +93,15 @@ class MountLifecycleWriteService {
         probe.setId(UUID.randomUUID());
         probe.setType(normalizedProtocol);
         probe.setPhysicalRoot(physicalRoot);
-        assertMountAvailable(username, probe);
+        log.info("mount connection test start: protocol={}, username={}, root={}", normalizedProtocol, username, physicalRoot);
+        try {
+            assertMountAvailable(username, probe);
+        } catch (BusinessException ex) {
+            log.warn("mount connection test failed: protocol={}, username={}, code={}, message={}",
+                    normalizedProtocol, username, ex.getCode(), ex.getMessage());
+            throw ex;
+        }
+        log.info("mount connection test success: protocol={}, username={}", normalizedProtocol, username);
         return new MountApplicationService.ConnectionCheckResult(normalizedProtocol, "available", "connection ok");
     }
 

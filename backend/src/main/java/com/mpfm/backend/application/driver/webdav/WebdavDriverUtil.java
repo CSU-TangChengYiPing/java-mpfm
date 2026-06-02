@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ import org.w3c.dom.NodeList;
  */
 public final class WebdavDriverUtil {
     private static final String PROPFIND_BODY = "<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:getetag/></d:prop></d:propfind>";
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
 
     private WebdavDriverUtil() {
     }
@@ -45,7 +48,10 @@ public final class WebdavDriverUtil {
                 String token = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
                 authHeader = "Basic " + token;
             }
-            HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(CONNECT_TIMEOUT)
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .build();
             return new DavConnection(client, root, authHeader);
         } catch (BusinessException ex) {
             throw ex;
@@ -126,6 +132,7 @@ public final class WebdavDriverUtil {
                     ? HttpRequest.BodyPublishers.noBody()
                     : HttpRequest.BodyPublishers.ofByteArray(body);
             HttpRequest.Builder builder = HttpRequest.newBuilder(resolve(connection, path))
+                    .timeout(REQUEST_TIMEOUT)
                     .method(method, publisher)
                     .header("Accept", "application/xml,text/plain,*/*");
             if (connection.authorization() != null) {

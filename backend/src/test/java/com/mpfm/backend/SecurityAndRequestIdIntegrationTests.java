@@ -1,6 +1,7 @@
 package com.mpfm.backend;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,6 +65,14 @@ class SecurityAndRequestIdIntegrationTests {
     void protectedEndpointShouldRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/v1/unknown"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(header().exists("X-Request-Id"));
+    }
+
+    @Test
+    void rootOptionsShouldChallengeWithBasicForWebDavDiscovery() throws Exception {
+        mockMvc.perform(options("/"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("WWW-Authenticate", "Basic realm=\"mpfm-webdav\""))
                 .andExpect(header().exists("X-Request-Id"));
     }
 }
