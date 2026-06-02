@@ -1,11 +1,11 @@
 import { Button } from "@heroui/button";
 import { Checkbox } from "@heroui/checkbox";
 import { Switch } from "@heroui/switch";
+import { Tooltip } from "@heroui/tooltip";
 import { LargeGlassInput } from "../../../components/common/LargeGlassField";
 import { ModalBody, ModalContent, ModalFooter, ModalHeader } from "@heroui/modal";
 import { type SortDescriptor, TableCell, TableColumn, TableRow } from "@heroui/table";
 import { Tab, Tabs } from "@heroui/tabs";
-import { Tooltip } from "@heroui/tooltip";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ import { FiAlertCircle, FiCheck, FiCheckSquare, FiEdit2, FiLink2, FiPlus, FiRefr
 import { useNavigate } from "react-router-dom";
 import key from "../../../const/key";
 import PaginatedTableShell from "../../../components/common/PaginatedTableShell";
+import InlineHelpTip from "../../../components/common/InlineHelpTip";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import MountsController, { type MountInfo } from "../../../controllers/mounts";
 import { useAuth } from "../../../hooks/useAuth";
@@ -72,14 +73,6 @@ function resolveBackendOrigin(): string {
     return envOrigin.replace(/\/+$/, "");
   }
   return "https://localhost:8443";
-}
-
-function ConfigHelpTip({ content }: { content: string }) {
-  return (
-    <Tooltip content={<div className="max-w-[320px] whitespace-pre-wrap text-xs">{content}</div>} showArrow>
-      <span className="inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-default-300 bg-default-100 text-xs font-semibold text-default-700">?</span>
-    </Tooltip>
-  );
 }
 
 /** 挂载管理页：统一挂载列表、创建编辑、批量选择与共享入口。 */
@@ -690,7 +683,7 @@ export default function MountsPage() {
                 {mountProtocol === "webdav" && (
                   <div className="flex items-center gap-2 rounded-md border border-default-200/60 bg-white/35 px-3 py-2 text-xs text-default-700 backdrop-blur-sm">
                     <span>{t("mounts.webdavConfigHelpTitle")}</span>
-                    <ConfigHelpTip content={t("mounts.webdavConfigHelpDetail")} />
+                    <InlineHelpTip ariaLabel={t("mounts.webdavConfigHelpTitle")} title={t("mounts.webdavConfigHelpTitle")} content={t("mounts.webdavConfigHelpDetail")} />
                   </div>
                 )}
                 <LargeGlassInput label={t("mounts.host")} size="md" value={mountHost} onValueChange={setMountHost} commitMode="blur" classNames={inputClassNames} />
@@ -748,7 +741,7 @@ export default function MountsPage() {
                 {editProtocol === "webdav" && (
                   <div className="flex items-center gap-2 rounded-md border border-default-200/60 bg-white/35 px-3 py-2 text-xs text-default-700 backdrop-blur-sm">
                     <span>{t("mounts.webdavConfigHelpTitle")}</span>
-                    <ConfigHelpTip content={t("mounts.webdavConfigHelpDetail")} />
+                    <InlineHelpTip ariaLabel={t("mounts.webdavConfigHelpTitle")} title={t("mounts.webdavConfigHelpTitle")} content={t("mounts.webdavConfigHelpDetail")} />
                   </div>
                 )}
                 <LargeGlassInput label={t("mounts.host")} size="md" value={editHost} onValueChange={setEditHost} commitMode="blur" classNames={inputClassNames} />

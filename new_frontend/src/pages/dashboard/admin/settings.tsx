@@ -3,15 +3,15 @@ import { Card, CardBody } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { Switch } from "@heroui/switch";
 import { Tab, Tabs } from "@heroui/tabs";
-import { Tooltip } from "@heroui/tooltip";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiCheckCircle, FiDownload, FiHelpCircle, FiXCircle } from "react-icons/fi";
+import { FiCheckCircle, FiDownload, FiXCircle } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { LargeGlassInput } from "../../../components/common/LargeGlassField";
+import InlineHelpTip from "../../../components/common/InlineHelpTip";
 import key from "../../../const/key";
 import AvatarUploader from "../../../components/profile/AvatarUploader";
 import ProfileController from "../../../controllers/profile";
@@ -329,11 +329,7 @@ export default function SettingsPage() {
                 <Button size="sm" color="primary" startContent={<FiDownload />} onPress={() => void downloadDevCert()}>
                   {t("settings.system.devCertDownload")}
                 </Button>
-                <Tooltip content={<div className="max-w-[300px] whitespace-pre-wrap text-xs">{t("settings.system.devCertHelp")}</div>} showArrow>
-                  <span className="inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-default-300 bg-default-100 text-default-700">
-                    <FiHelpCircle className="text-[12px]" />
-                  </span>
-                </Tooltip>
+                <InlineHelpTip ariaLabel={t("settings.system.devCertHelp")} content={t("settings.system.devCertHelp")} className="ml-1" />
               </div>
             </ConfigPageItem>
           </Tab>
