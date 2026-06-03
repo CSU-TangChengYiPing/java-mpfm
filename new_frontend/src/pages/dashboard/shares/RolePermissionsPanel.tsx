@@ -73,7 +73,7 @@ export default function RolePermissionsPanel(props: {
     let normalizedLogic = (p.browsePath || ".").replace(/\\/g, "/").replace(/\/+/g, "/");
     if (normalizedLogic !== "." && !normalizedLogic.startsWith("/")) normalizedLogic = `/${normalizedLogic}`;
     const namePrefix = selectedMountName ? `/personal/${selectedMountName}` : "";
-    let suffix = "";
+    let suffix: string;
     if (normalizedLogic.startsWith(logicPrefix)) {
       suffix = normalizedLogic.slice(logicPrefix.length);
     } else if (namePrefix && normalizedLogic.startsWith(namePrefix)) {
@@ -177,7 +177,7 @@ export default function RolePermissionsPanel(props: {
       }
       stack.push(part);
     }
-    const normalized = `/${stack.join("/")}` || "/";
+    const normalized = `/${stack.join("/")}`;
     const personalIndex = (() => {
       for (let i = stack.length - 2; i >= 0; i -= 1) {
         if (stack[i] === "personal") return i;
@@ -185,8 +185,8 @@ export default function RolePermissionsPanel(props: {
       return -1;
     })();
     if (personalIndex >= 0) {
-      const suffix = stack.slice(personalIndex + 2);
-      return suffix.length > 0 ? `/${suffix.join("/")}` : "/";
+      const suffixParts = stack.slice(personalIndex + 2);
+      return suffixParts.length > 0 ? `/${suffixParts.join("/")}` : "/";
     }
     if (!logicPrefix) return normalized.startsWith("/") ? normalized : `/${normalized}`;
     if (normalized === logicPrefix) return "/";
@@ -428,6 +428,7 @@ export default function RolePermissionsPanel(props: {
         canOperatePath={() => true}
         currentIsRoot={p.currentIsRoot}
         resolveDownloadUrl={() => null}
+        showPermissionColumn
         showDefaultActions={false}
         extraAction={{
           icon: <FiShield />,
@@ -540,6 +541,7 @@ export default function RolePermissionsPanel(props: {
             canOperatePath={canPreviewOperate}
             currentIsRoot={p.currentIsRoot}
             resolveDownloadUrl={() => null}
+            showPermissionColumn
             showDefaultActions={false}
             extraAction={{
               icon: <FiShield />,

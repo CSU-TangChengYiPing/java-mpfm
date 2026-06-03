@@ -49,6 +49,7 @@ export default function RolePreviewPanel(props: {
         canOperatePath={() => false}
         currentIsRoot={p.currentIsRoot}
         resolveDownloadUrl={() => null}
+        showPermissionColumn
       />
     </>
   );

@@ -71,6 +71,22 @@ const typeByExt: Record<string, string> = {
   ".ps1": "script",
 };
 
+export const fileTableNameColumnClassName = "w-[40%] md:w-[34%] md:min-w-[240px]";
+export const fileTableActionsColumnClassName = "w-[60%] md:w-[160px] md:min-w-[160px]";
+export const fileTablePermissionColumnClassName = "w-[28%] md:w-[144px] md:min-w-[132px]";
+
+export function resolveFileTableColumnClassNames(showPermissionColumn = false): {
+  name: string;
+  permission: string;
+  actions: string;
+} {
+  return {
+    name: fileTableNameColumnClassName,
+    permission: showPermissionColumn ? fileTablePermissionColumnClassName : "hidden md:table-cell",
+    actions: showPermissionColumn ? "w-[32%] md:w-[120px] md:min-w-[112px]" : fileTableActionsColumnClassName,
+  };
+}
+
 export function getFileTypeLabel(file: FileInfo): string {
   if (file.isDirectory) return i18n.t("types.directory");
   const ext = path.extname(file.name).toLowerCase();
@@ -126,7 +142,7 @@ function selectedModeRowClass(selectionMode: boolean, isSelected: boolean): stri
 }
 
 /** 文件列表主表格：统一处理预览、选择、权限可操作性与行内动作按钮。 */
-export default function FileTable({ files, currentPath, loading, sortDescriptor, onSortChange, selectedFiles, onSelectionChange, selectionMode, onDirectoryClick, onEdit, onPreview, onRenameRequest, onMoveRequest, onCopyPath, onDelete, onDownload, canOperatePath, currentIsRoot, resolveDownloadUrl, resolveMountProtocol, extraAction, showDefaultActions = true, wrapperClassName }: { files: FileInfo[]; currentPath: string; loading: boolean; sortDescriptor: SortDescriptor; onSortChange: (descriptor: SortDescriptor) => void; selectedFiles: Selection; onSelectionChange: (selected: Selection) => void; selectionMode: boolean; onDirectoryClick: (dirPath: string) => void; onEdit: (filePath: string) => void; onPreview: (filePath: string) => void; onRenameRequest: (filePath: string) => void; onMoveRequest: (filePath: string) => void; onCopyPath: (filePath: string) => void; onDelete: (filePath: string) => void; onDownload: (filePath: string) => void; canOperatePath: (filePath: string) => boolean; currentIsRoot?: boolean; resolveDownloadUrl: (filePath: string) => string | null; resolveMountProtocol?: (mountName: string) => string | undefined; extraAction?: { icon: ReactNode; title: string; onPress: (filePath: string, file: FileInfo) => void; disabled?: (filePath: string, file: FileInfo, canOperate: boolean, canManage: boolean) => boolean }; showDefaultActions?: boolean; wrapperClassName?: string }) {
+export default function FileTable({ files, currentPath, loading, sortDescriptor, onSortChange, selectedFiles, onSelectionChange, selectionMode, onDirectoryClick, onEdit, onPreview, onRenameRequest, onMoveRequest, onCopyPath, onDelete, onDownload, canOperatePath, currentIsRoot, resolveDownloadUrl, resolveMountProtocol, extraAction, showDefaultActions = true, showPermissionColumn = false, wrapperClassName }: { files: FileInfo[]; currentPath: string; loading: boolean; sortDescriptor: SortDescriptor; onSortChange: (descriptor: SortDescriptor) => void; selectedFiles: Selection; onSelectionChange: (selected: Selection) => void; selectionMode: boolean; onDirectoryClick: (dirPath: string) => void; onEdit: (filePath: string) => void; onPreview: (filePath: string) => void; onRenameRequest: (filePath: string) => void; onMoveRequest: (filePath: string) => void; onCopyPath: (filePath: string) => void; onDelete: (filePath: string) => void; onDownload: (filePath: string) => void; canOperatePath: (filePath: string) => boolean; currentIsRoot?: boolean; resolveDownloadUrl: (filePath: string) => string | null; resolveMountProtocol?: (mountName: string) => string | undefined; extraAction?: { icon: ReactNode; title: string; onPress: (filePath: string, file: FileInfo) => void; disabled?: (filePath: string, file: FileInfo, canOperate: boolean, canManage: boolean) => boolean }; showDefaultActions?: boolean; showPermissionColumn?: boolean; wrapperClassName?: string }) {
   const { t } = useTranslation();
   const [showImage, setShowImage] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
@@ -289,6 +305,7 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
     }
     onEdit(filePath);
   };
+  const columnClassNames = resolveFileTableColumnClassNames(showPermissionColumn);
 
   useEffect(() => {
     if (!showImage || previewImages.length === 0) return;
@@ -379,12 +396,12 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
               <Checkbox isSelected={allSelected} isIndeterminate={partiallySelected} onValueChange={toggleSelectAll} />
             </div>
           </TableColumn>
-          <TableColumn key="name" allowsSorting width={320} minWidth={240} className="md:w-[34%]">{t("fileManager.name")}</TableColumn>
+          <TableColumn key="name" allowsSorting className={columnClassNames.name}>{t("fileManager.name")}</TableColumn>
           <TableColumn key="type" allowsSorting width={120} minWidth={96} className="hidden md:table-cell">{t("fileManager.type")}</TableColumn>
           <TableColumn key="size" allowsSorting width={110} minWidth={96} className="hidden md:table-cell">{t("fileManager.size")}</TableColumn>
           <TableColumn key="mtime" allowsSorting width={180} minWidth={160} className="hidden md:table-cell">{t("fileManager.mtime")}</TableColumn>
-          <TableColumn key="perm" width={132} minWidth={120} className="hidden md:table-cell">{t("fileManager.permission")}</TableColumn>
-          <TableColumn key="actions" width={220} minWidth={220} className="w-[160px]">{t("fileManager.actions")}</TableColumn>
+          <TableColumn key="perm" className={columnClassNames.permission}>{t("fileManager.permission")}</TableColumn>
+          <TableColumn key="actions" className={columnClassNames.actions}>{t("fileManager.actions")}</TableColumn>
           </>
         }
         renderRow={(file) => {
@@ -423,7 +440,7 @@ export default function FileTable({ files, currentPath, loading, sortDescriptor,
                 <TableCell onClick={() => openRow(file, filePath, ext)} className="hidden cursor-pointer md:table-cell">{getVirtualTypeLabel(currentPath, file, resolveMountProtocol)}</TableCell>
                 <TableCell onClick={() => openRow(file, filePath, ext)} className="hidden cursor-pointer md:table-cell">{Number.isNaN(file.size) || file.isDirectory ? "-" : formatBytes(file.size)}</TableCell>
                 <TableCell onClick={() => openRow(file, filePath, ext)} className="hidden cursor-pointer md:table-cell">{new Date(file.mtime).toLocaleString()}</TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className={showPermissionColumn ? fileTablePermissionColumnClassName : "hidden md:table-cell"}>
                   <div className="flex items-center gap-2">
                     {!isVirtualEntry && visible && (
                       <ShadowTooltip content="visible">
