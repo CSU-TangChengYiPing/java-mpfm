@@ -153,6 +153,7 @@ public class MountController {
             String state,
             @JsonProperty("shared_enabled") boolean sharedEnabled,
             @JsonProperty("owner_user") String ownerUser,
+            @JsonProperty("owner_display_name") String ownerDisplayName,
             @JsonProperty("can_manage") boolean canManage) {
         static MountResponse from(MountApplicationService.MountResult mount) {
             boolean enabled = "enabled".equalsIgnoreCase(mount.state());
@@ -168,6 +169,7 @@ public class MountController {
                     mount.state(),
                     mount.sharedEnabled(),
                     mount.ownerUser(),
+                    mount.ownerDisplayName(),
                     mount.canManage());
         }
     }

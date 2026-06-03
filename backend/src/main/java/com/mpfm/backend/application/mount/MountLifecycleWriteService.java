@@ -160,7 +160,7 @@ class MountLifecycleWriteService {
             if (localRoot != null && !localRoot.isBlank()) {
                 physicalRoot = Path.of(localRoot.trim()).toAbsolutePath().normalize();
             } else {
-                physicalRoot = localRootBase.resolve(sanitize(owner)).resolve(sanitize(mountName)).normalize();
+                physicalRoot = localRootBase.resolve(sanitizeLocalPathSegment(owner)).resolve(sanitizeLocalPathSegment(mountName)).normalize();
             }
             try {
                 Files.createDirectories(physicalRoot);
@@ -329,8 +329,17 @@ class MountLifecycleWriteService {
         }
     }
 
-    private String sanitize(String input) {
-        return input.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9-_]", "-");
+    /**
+     * 本地挂载目录段清洗：只替换文件系统非法字符，保留中文等可读名称，避免不同挂载名被压成同一目录。
+     */
+    private String sanitizeLocalPathSegment(String input) {
+        String normalized = input == null ? "" : input.trim();
+        if (normalized.isEmpty()) {
+            return "-";
+        }
+        String safe = normalized.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "-");
+        safe = safe.replaceAll("\\s+", " ").trim();
+        return safe.isEmpty() ? "-" : safe;
     }
 
     private void validateMountName(String name) {

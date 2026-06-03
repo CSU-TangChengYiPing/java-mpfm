@@ -48,7 +48,7 @@ public class MountApplicationService {
 
     /** 挂载摘要模型，返回挂载标识、路径、归属与管理权限等基础信息。 */
     public record MountResult(UUID mountId, String type, String name, String physicalRoot, String virtualPath, String state, boolean sharedEnabled,
-                              String ownerUser, boolean canManage) { }
+                              String ownerUser, String ownerDisplayName, boolean canManage) { }
     /** 过期清理结果模型，返回清理数量与截止时间。 */
     public record PurgeResult(int purgedCount, String dueBefore) { }
     /** 健康检查结果模型，返回健康等级与原因。 */

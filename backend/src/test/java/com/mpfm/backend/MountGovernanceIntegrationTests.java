@@ -233,6 +233,51 @@ class MountGovernanceIntegrationTests {
     }
 
     @Test
+    void localMountAutoRootShouldPreserveChineseNamesAndKeepDistinctDirectories() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 6);
+        String owner = "owner_c_" + suffix;
+        register(owner);
+        String ownerToken = login(owner, "Passw0rd!");
+
+        String firstMountId = JsonPath.read(mockMvc.perform(post("/api/v1/mounts")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"你好",
+                                  "protocol":"local",
+                                  "enabled":true,
+                                  "shared_enabled":false
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(), "$.mountId");
+
+        String secondMountId = JsonPath.read(mockMvc.perform(post("/api/v1/mounts")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"再见",
+                                  "protocol":"local",
+                                  "enabled":true,
+                                  "shared_enabled":false
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(), "$.mountId");
+
+        MountEntity firstMount = mountRepository.findById(UUID.fromString(firstMountId)).orElseThrow();
+        MountEntity secondMount = mountRepository.findById(UUID.fromString(secondMountId)).orElseThrow();
+
+        org.assertj.core.api.Assertions.assertThat(firstMount.getPhysicalRoot()).contains("你好");
+        org.assertj.core.api.Assertions.assertThat(secondMount.getPhysicalRoot()).contains("再见");
+        org.assertj.core.api.Assertions.assertThat(firstMount.getPhysicalRoot()).isNotEqualTo(secondMount.getPhysicalRoot());
+        org.assertj.core.api.Assertions.assertThat(firstMount.getPhysicalRoot()).doesNotContain("---");
+        org.assertj.core.api.Assertions.assertThat(secondMount.getPhysicalRoot()).doesNotContain("---");
+    }
+
+    @Test
     void mountUpdateAndEnableDisableShouldRejectNonOwner() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 6);
         String owner = "owner_p_" + suffix;

@@ -1,5 +1,6 @@
 import { Button } from "@heroui/button";
 import { Checkbox } from "@heroui/checkbox";
+import { Chip } from "@heroui/chip";
 import { Switch } from "@heroui/switch";
 import { Tooltip } from "@heroui/tooltip";
 import { LargeGlassInput } from "../../../components/common/LargeGlassField";
@@ -25,6 +26,14 @@ function protocolLabel(protocol: string, t: (k: string, o?: Record<string, unkno
   if (normalized === "local") return t("mounts.local");
   if (normalized === "webdav") return t("mounts.webdavProtocol");
   return t("mounts.sftp");
+}
+
+function ownerLabel(mount: MountInfo): string {
+  const ownerDisplayName = (mount.owner_display_name ?? "").trim();
+  if (ownerDisplayName) return ownerDisplayName;
+  const ownerUser = (mount.owner_user ?? "").trim();
+  if (ownerUser) return ownerUser;
+  return "-";
 }
 
 type RemoteAddressParseResult = {
@@ -80,6 +89,7 @@ export default function MountsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const currentUsername = (user?.username ?? "").trim();
   const [mounts, setMounts] = useState<MountInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
@@ -558,6 +568,7 @@ export default function MountsPage() {
         header={
           <>
               <TableColumn key="name" allowsSorting>{t("mounts.name")}</TableColumn>
+              <TableColumn key="owner" className="hidden md:table-cell">{t("mounts.ownerName")}</TableColumn>
               <TableColumn key="shared">{t("mounts.shared")}</TableColumn>
               <TableColumn key="status" allowsSorting>{t("mounts.status")}</TableColumn>
               <TableColumn key="webdav_path" className="hidden lg:table-cell">{t("mounts.webdav")}</TableColumn>
@@ -570,6 +581,24 @@ export default function MountsPage() {
                     <div className="flex flex-col gap-1">
                       <span className="font-medium">{m.name}</span>
                       <div className="text-xs text-default-500">{protocolLabel(m.protocol, t)}</div>
+                      <div className="flex items-center gap-2 text-xs text-default-500 md:hidden">
+                        <span className="truncate">{ownerLabel(m)}</span>
+                        {(m.owner_user ?? "").trim() && (m.owner_user ?? "").trim() === currentUsername && (
+                          <Chip size="sm" color="success" variant="flat" className="h-5 px-2 text-[11px] leading-none">
+                            {t("mounts.self")}
+                          </Chip>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium text-default-700">{ownerLabel(m)}</span>
+                      {(m.owner_user ?? "").trim() && (m.owner_user ?? "").trim() === currentUsername && (
+                        <Chip size="sm" color="success" variant="flat" className="h-5 px-2 text-[11px] leading-none">
+                          {t("mounts.self")}
+                        </Chip>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

@@ -13,6 +13,7 @@ export type MountInfo = {
   owner_user?: string;
   effective_permissions?: string[];
   can_manage?: boolean;
+  owner_display_name?: string;
 };
 
 type MountResponse = {
@@ -32,6 +33,7 @@ type MountResponse = {
   owner_user?: string;
   effective_permissions?: string[];
   can_manage?: boolean;
+  owner_display_name?: string;
 };
 
 type MountsResponse = { mounts?: MountResponse[] };
@@ -247,6 +249,7 @@ function normalizeMount(item: MountResponse): MountInfo {
     username: item.username,
     last_error: item.last_error ?? "",
     owner_user: item.owner_user ?? "",
+    owner_display_name: item.owner_display_name ?? "",
     effective_permissions: item.effective_permissions ?? [],
     can_manage: item.can_manage ?? false,
   };

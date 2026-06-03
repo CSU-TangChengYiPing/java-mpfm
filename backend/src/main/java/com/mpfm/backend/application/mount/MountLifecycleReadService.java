@@ -10,6 +10,7 @@ import com.mpfm.backend.infrastructure.persistence.repository.UserRepository;
 import com.mpfm.backend.infrastructure.persistence.repository.share.v5.SharedMountAccessV5Repository;
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +40,7 @@ class MountLifecycleReadService {
         if (user.getPlatformRole() != PlatformRole.USER) {
             return mounts.stream().map(mount -> toResult(mount, user)).toList();
         }
-        LinkedHashMap<UUID, MountEntity> merged = new LinkedHashMap<>();
+        Map<UUID, MountEntity> merged = new LinkedHashMap<>();
         for (MountEntity mount : mounts) {
             merged.put(mount.getId(), mount);
         }
@@ -86,9 +87,12 @@ class MountLifecycleReadService {
                 : mount.getVirtualPath();
         UserEntity owner = userRepository.findById(mount.getOwnerId()).orElse(null);
         String ownerUser = owner == null ? "" : owner.getUsername();
+        String ownerDisplayName = owner == null
+                ? ""
+                : (owner.getDisplayName() == null || owner.getDisplayName().isBlank() ? owner.getUsername() : owner.getDisplayName());
         boolean canManage = currentUser.getPlatformRole() != PlatformRole.USER || mount.getOwnerId().equals(currentUser.getId());
         return new MountApplicationService.MountResult(
                 mount.getId(), mount.getType(), mount.getName(), mount.getPhysicalRoot(),
-                virtualPath, mount.getState(), mount.isSharedEnabled(), ownerUser, canManage);
+                virtualPath, mount.getState(), mount.isSharedEnabled(), ownerUser, ownerDisplayName, canManage);
     }
 }

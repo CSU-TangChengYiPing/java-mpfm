@@ -17,13 +17,13 @@ describe("MountsController", () => {
   it("list supports object and array payload with field mapping", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(mockJsonResponse({ mounts: [{ mountId: "m1", type: "local", virtualPath: "/a", name: "A", state: "enabled" }] }))
+      .mockResolvedValueOnce(mockJsonResponse({ mounts: [{ mountId: "m1", type: "local", virtualPath: "/a", name: "A", state: "enabled", owner_display_name: "张三" }] }))
       .mockResolvedValueOnce(mockJsonResponse([{ id: "m2", protocol: "local", root: "/b", name: "B", enabled: false }]));
 
     const first = await MountsController.list();
     const second = await MountsController.list();
 
-    expect(first[0]).toMatchObject({ id: "m1", protocol: "local", root: "/a", enabled: true });
+    expect(first[0]).toMatchObject({ id: "m1", protocol: "local", root: "/a", enabled: true, owner_display_name: "张三" });
     expect(second[0]).toMatchObject({ id: "m2", protocol: "local", root: "/b", enabled: false });
     expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/v1/mounts", undefined);
     expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/v1/mounts", undefined);
