@@ -17,6 +17,7 @@
 ## 项目定位
 <h3>What is MPFM</h3>
 <p>
+  一个学生用ai写的大作业。
   MPFM 是一个面向多协议文件访问的统一平台，聚焦在同一业务域下整合
   <code>local / sftp / webdav</code> 的文件能力。
 </p>
