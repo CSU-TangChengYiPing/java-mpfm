@@ -5,7 +5,8 @@ export const en = {
       common: {
         actions: "Actions", all: "All", cancel: "Cancel", pause: "Pause", clear: "Clear", close: "Close", copy: "Copy", create: "Create", createFailed: "Create failed", createSuccess: "Created", expand: "Expand", collapse: "Collapse",
         deleteFailed: "Delete failed", deleteSuccess: "Deleted", disable: "Disable", disabled: "Disabled", empty: "(empty)", enable: "Enable", enabled: "Enabled", modify: "Modify",
-        next: "Next", previous: "Previous", refresh: "Refresh", save: "Save", saveFailed: "Save failed", saveSuccess: "Saved", saved: "Saved", unmount: "Unmount", view: "View", download: "Download", delete: "Delete", search: "Search", networkError: "Network error", serverError: "Server error, please retry later"
+        next: "Next", previous: "Previous", refresh: "Refresh", save: "Save", saveFailed: "Save failed", saveSuccess: "Saved", saved: "Saved", unmount: "Unmount", view: "View", download: "Download", delete: "Delete", search: "Search", networkError: "Network error", serverError: "Server error, please retry later",
+        rateUnits: { b: "B/s", kb: "KB/s", mb: "MB/s", gb: "GB/s" }
       },
       sidebar: { theme: "Theme", language: "Language", logout: "Logout", localeSwitch: "EN", role: "Role", root: "Root", user: "User" },
       auth: { rootOnlyUsers: "Only root can access user management.", rootOnlyGroups: "Only root can access group management.", rootOnlyDebug: "Only root can view backend logs." },
@@ -199,11 +200,11 @@ export const en = {
           policy: "Policy Template",
           name: "Policy Name",
           enabled: "Enabled",
-          maxUploadMbps: "Max Upload (MB/s)",
-          maxDownloadMbps: "Max Download (MB/s)",
+          maxUploadMbps: "Max Upload Rate",
+          maxDownloadMbps: "Max Download Rate",
           maxUploadTasks: "Max Upload Concurrency",
           maxDownloadTasks: "Max Download Concurrency",
-          hint: "Recommended range: 1~2048 MB/s and 1~64 concurrency. High concurrency may impact other operations.",
+          hint: "Recommended range: 1 KB/s ~ 2048 MB/s and 1~64 concurrency. High concurrency may impact other operations.",
           saved: "QoS policy saved and audited",
           rollback: "Rollback to server value",
           rollbackDone: "Rolled back to current server config",
@@ -235,8 +236,8 @@ export const en = {
             nameRequired: "Policy name is required",
             selectModeRequired: "Please enable selection mode first",
             selectFirst: "Please select policies to delete first",
-            uploadRange: "Upload must be between 1 and 2048 MB/s",
-            downloadRange: "Download must be between 1 and 2048 MB/s",
+            uploadRange: "Upload must be between 1 KB/s and 2048 MB/s",
+            downloadRange: "Download must be between 1 KB/s and 2048 MB/s",
             uploadTasksRange: "Upload concurrency must be an integer between 1 and 64",
             downloadTasksRange: "Download concurrency must be an integer between 1 and 64"
           }

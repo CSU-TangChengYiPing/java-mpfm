@@ -10,8 +10,10 @@ import { LargeGlassInput } from "../../../components/common/LargeGlassField";
 import PaginatedTableShell from "../../../components/common/PaginatedTableShell";
 import RootOnlyNoticeCard from "../../../components/common/RootOnlyNoticeCard";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
+import RateInputField from "../../../components/common/RateInputField";
 import UsersController, { type QosPolicyInfo } from "../../../controllers/users";
 import { useAuth } from "../../../hooks/useAuth";
+import { formatRateBps } from "../../../utils/rateFormat";
 
 type QosRow = QosPolicyInfo & { key: string };
 
@@ -19,6 +21,12 @@ type QosRow = QosPolicyInfo & { key: string };
 export default function QosPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const rateUnitLabels = useMemo(() => ({
+    B: t("common.rateUnits.b"),
+    KB: t("common.rateUnits.kb"),
+    MB: t("common.rateUnits.mb"),
+    GB: t("common.rateUnits.gb"),
+  }), [t]);
   const [loading, setLoading] = useState(false);
   const [policies, setPolicies] = useState<QosPolicyInfo[]>([]);
   const [search, setSearch] = useState("");
@@ -27,8 +35,8 @@ export default function QosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<QosPolicyInfo | null>(null);
   const [name, setName] = useState("");
-  const [uploadMbps, setUploadMbps] = useState("8");
-  const [downloadMbps, setDownloadMbps] = useState("8");
+  const [uploadBps, setUploadBps] = useState(8 * 1024 * 1024);
+  const [downloadBps, setDownloadBps] = useState(8 * 1024 * 1024);
 
   const load = useCallback(async () => {
     if (!user?.is_root) return;
@@ -59,25 +67,23 @@ export default function QosPage() {
   function openCreate() {
     setEditing(null);
     setName("");
-    setUploadMbps("8");
-    setDownloadMbps("8");
+    setUploadBps(8 * 1024 * 1024);
+    setDownloadBps(8 * 1024 * 1024);
     setIsModalOpen(true);
   }
 
   function openEdit(policy: QosPolicyInfo) {
     setEditing(policy);
     setName(policy.name);
-    setUploadMbps(String(Math.round(policy.maxUploadBps / 1024 / 1024)));
-    setDownloadMbps(String(Math.round(policy.maxDownloadBps / 1024 / 1024)));
+    setUploadBps(policy.maxUploadBps);
+    setDownloadBps(policy.maxDownloadBps);
     setIsModalOpen(true);
   }
 
   function validateForm() {
-    const up = Number(uploadMbps);
-    const down = Number(downloadMbps);
     if (!name.trim()) return t("users.qos.validation.nameRequired");
-    if (!Number.isFinite(up) || up <= 0 || up > 2048) return t("users.qos.validation.uploadRange");
-    if (!Number.isFinite(down) || down <= 0 || down > 2048) return t("users.qos.validation.downloadRange");
+    if (!Number.isFinite(uploadBps) || uploadBps < 1024 || uploadBps > 2048 * 1024 * 1024) return t("users.qos.validation.uploadRange");
+    if (!Number.isFinite(downloadBps) || downloadBps < 1024 || downloadBps > 2048 * 1024 * 1024) return t("users.qos.validation.downloadRange");
     return "";
   }
 
@@ -89,8 +95,8 @@ export default function QosPage() {
     }
     const payload = {
       name: name.trim(),
-      maxUploadBps: Math.round(Number(uploadMbps) * 1024 * 1024),
-      maxDownloadBps: Math.round(Number(downloadMbps) * 1024 * 1024),
+      maxUploadBps: Math.round(uploadBps),
+      maxDownloadBps: Math.round(downloadBps),
     };
     try {
       if (editing) {
@@ -218,8 +224,8 @@ export default function QosPage() {
             <TableRow key={item.key}>
               <TableCell>{item.id}</TableCell>
               <TableCell>{item.name}</TableCell>
-              <TableCell>{Math.round(item.maxUploadBps / 1024 / 1024)}</TableCell>
-              <TableCell>{Math.round(item.maxDownloadBps / 1024 / 1024)}</TableCell>
+              <TableCell>{formatRateBps(item.maxUploadBps, { labels: rateUnitLabels })}</TableCell>
+              <TableCell>{formatRateBps(item.maxDownloadBps, { labels: rateUnitLabels })}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-1">
                   <Button isIconOnly radius="sm" size="sm" variant="flat" color="primary" onPress={() => openEdit(item)}>
@@ -243,8 +249,18 @@ export default function QosPage() {
           cancelText={t("common.cancel")}
         >
           <LargeGlassInput label={t("users.qos.name")} size="sm" value={name} onValueChange={setName} commitMode="blur" />
-          <LargeGlassInput label={t("users.qos.maxUploadMbps")} size="sm" value={uploadMbps} onValueChange={setUploadMbps} commitMode="blur" />
-          <LargeGlassInput label={t("users.qos.maxDownloadMbps")} size="sm" value={downloadMbps} onValueChange={setDownloadMbps} commitMode="blur" />
+          <RateInputField
+            label={t("users.qos.maxUploadMbps")}
+            valueBps={uploadBps}
+            onValueChangeBps={setUploadBps}
+            allowedUnits={["KB", "MB"]}
+          />
+          <RateInputField
+            label={t("users.qos.maxDownloadMbps")}
+            valueBps={downloadBps}
+            onValueChangeBps={setDownloadBps}
+            allowedUnits={["KB", "MB"]}
+          />
         </FormModal>
       </div>
     </div>

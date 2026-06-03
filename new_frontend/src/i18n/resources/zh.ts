@@ -24,7 +24,8 @@ export const zh = {
       common: {
         actions: "操作", all: "全部", cancel: "取消", pause: "暂停", clear: "清空", close: "关闭", copy: "复制", create: "创建", createFailed: "创建失败", createSuccess: "创建成功",
         delete: "删除", deleteFailed: "删除失败", deleteSuccess: "删除成功", disable: "停用", disabled: "未启用", empty: "空", enable: "启用", enabled: "已启用", expand: "展开", collapse: "收起",
-        modify: "修改", next: "下一条", previous: "上一条", refresh: "刷新", save: "保存", saveFailed: "保存失败", saveSuccess: "保存成功", saved: "已保存", unmount: "卸载", view: "查看", download: "下载", search: "搜索", networkError: "网络错误", serverError: "服务端异常，请稍后重试"
+        modify: "修改", next: "下一条", previous: "上一条", refresh: "刷新", save: "保存", saveFailed: "保存失败", saveSuccess: "保存成功", saved: "已保存", unmount: "卸载", view: "查看", download: "下载", search: "搜索", networkError: "网络错误", serverError: "服务端异常，请稍后重试",
+        rateUnits: { b: "B/s", kb: "KB/s", mb: "MB/s", gb: "GB/s" }
       },
       sidebar: { theme: "切换主题", language: "语言", logout: "退出登录", localeSwitch: "中文", role: "角色", root: "Root", user: "User" },
       auth: { rootOnlyUsers: "当前账号非 root，用户管理页面不可用。", rootOnlyGroups: "当前账号非 root，组管理页面不可用。", rootOnlyDebug: "仅 root 用户可查看后端日志。" },
@@ -218,11 +219,11 @@ export const zh = {
           policy: "策略模板",
           name: "策略名称",
           enabled: "启用状态",
-          maxUploadMbps: "上行速率上限（MB/s）",
-          maxDownloadMbps: "下行速率上限（MB/s）",
+          maxUploadMbps: "上行速率上限",
+          maxDownloadMbps: "下行速率上限",
           maxUploadTasks: "上传并发上限",
           maxDownloadTasks: "下载并发上限",
-          hint: "建议：速率范围 1~2048 MB/s，并发范围 1~64。高并发会影响其他交互请求。",
+          hint: "建议：速率范围 1 KB/s ~ 2048 MB/s，并发范围 1~64。高并发会影响其他交互请求。",
           saved: "QoS 策略已保存并写入审计",
           rollback: "回滚为服务端当前值",
           rollbackDone: "已回滚到服务端当前配置",
@@ -254,8 +255,8 @@ export const zh = {
             nameRequired: "策略名称不能为空",
             selectModeRequired: "请先开启选择模式",
             selectFirst: "请先选择要删除的策略",
-            uploadRange: "上行速率需在 1~2048 MB/s 之间",
-            downloadRange: "下行速率需在 1~2048 MB/s 之间",
+            uploadRange: "上行速率需在 1 KB/s ~ 2048 MB/s 之间",
+            downloadRange: "下行速率需在 1 KB/s ~ 2048 MB/s 之间",
             uploadTasksRange: "上传并发需为 1~64 的整数",
             downloadTasksRange: "下载并发需为 1~64 的整数"
           }

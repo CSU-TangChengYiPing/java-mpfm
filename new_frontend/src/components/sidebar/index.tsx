@@ -14,6 +14,7 @@ import FileManager from "../../controllers/file_manager";
 import { useAuth } from "../../hooks/useAuth";
 import { toggleTheme } from "../../utils/theme";
 import { subscribeTransferRate } from "../../utils/transferRateMeter";
+import { formatRateBps } from "../../utils/rateFormat";
 import Menus from "./menus";
 import UserAvatar from "../common/UserAvatar";
 
@@ -37,6 +38,12 @@ export default function SideBar({ open, items, onClose }: SideBarProps) {
   const [downloadStats, setDownloadStats] = useState<{ running: number; pending: number }>({ running: 0, pending: 0 });
   const hasBackground = !!backgroundImage;
   const isDark = document.documentElement.classList.contains("dark");
+  const rateUnitLabels = useMemo(() => ({
+    B: t("common.rateUnits.b"),
+    KB: t("common.rateUnits.kb"),
+    MB: t("common.rateUnits.mb"),
+    GB: t("common.rateUnits.gb"),
+  }), [t]);
 
   
   const visibleItems = useMemo<MenuItem[]>(() => {
@@ -99,12 +106,6 @@ export default function SideBar({ open, items, onClose }: SideBarProps) {
       : totalRate <= 32 * 1024 * 1024
         ? "text-warning-700 bg-warning-100/80 dark:text-warning-300 dark:bg-warning-500/15"
         : "text-danger-700 bg-danger-100/80 dark:text-danger-300 dark:bg-danger-500/15";
-
-  const formatBps = (bps: number) => {
-    if (bps >= 1024 * 1024) return `${(bps / (1024 * 1024)).toFixed(1)}M/s`;
-    if (bps >= 1024) return `${(bps / 1024).toFixed(1)}K/s`;
-    return `${Math.round(bps)}B/s`;
-  };
 
   const toggleLocale = () => {
     const current = i18n.resolvedLanguage || i18n.language;
@@ -214,11 +215,11 @@ export default function SideBar({ open, items, onClose }: SideBarProps) {
                 <div className={`mt-2 flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold ${rateColorClass}`}>
                   <div className="flex items-center gap-1">
                     <FiArrowUp size={12} />
-                    <span>{formatBps(transferRate.uploadBps)}</span>
+                    <span>{formatRateBps(transferRate.uploadBps, { labels: rateUnitLabels })}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <FiArrowDown size={12} />
-                    <span>{formatBps(transferRate.downloadBps)}</span>
+                    <span>{formatRateBps(transferRate.downloadBps, { labels: rateUnitLabels })}</span>
                   </div>
                 </div>
               )}

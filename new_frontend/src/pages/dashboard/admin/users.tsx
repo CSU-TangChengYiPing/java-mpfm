@@ -2,7 +2,7 @@ import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
 import { Switch } from "@heroui/switch";
 import { TableCell, TableColumn, TableRow } from "@heroui/table";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiEdit2, FiPlus, FiRefreshCw, FiSearch, FiSettings } from "react-icons/fi";
 import toast from "react-hot-toast";
@@ -10,16 +10,24 @@ import { useNavigate } from "react-router-dom";
 import FormModal from "../../../components/common/FormModal";
 import PaginatedTableShell from "../../../components/common/PaginatedTableShell";
 import RootOnlyNoticeCard from "../../../components/common/RootOnlyNoticeCard";
+import RateInputField from "../../../components/common/RateInputField";
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import { LargeGlassInput } from "../../../components/common/LargeGlassField";
 import UsersController, { type UserInfo } from "../../../controllers/users";
 import { useAuth } from "../../../hooks/useAuth";
+import { formatRateBps } from "../../../utils/rateFormat";
 
 /** 用户管理页：聚焦用户列表与治理动作，QoS 策略配置迁移至独立页面。 */
 export default function UsersPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const rateUnitLabels = useMemo(() => ({
+    B: t("common.rateUnits.b"),
+    KB: t("common.rateUnits.kb"),
+    MB: t("common.rateUnits.mb"),
+    GB: t("common.rateUnits.gb"),
+  }), [t]);
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,15 +43,15 @@ export default function UsersPage() {
   const [formRole, setFormRole] = useState<"user" | "admin">("user");
   const [formStatus, setFormStatus] = useState<"active" | "disabled">("active");
   const [formQosProfile, setFormQosProfile] = useState("default");
-  const [formCustomUploadMbps, setFormCustomUploadMbps] = useState("0");
-  const [formCustomDownloadMbps, setFormCustomDownloadMbps] = useState("0");
+  const [formCustomUploadBps, setFormCustomUploadBps] = useState(0);
+  const [formCustomDownloadBps, setFormCustomDownloadBps] = useState(0);
   const [formUploadPaused, setFormUploadPaused] = useState(false);
   const [formDownloadPaused, setFormDownloadPaused] = useState(false);
   const [qosOptions, setQosOptions] = useState<Array<{ id: string; name: string; maxUploadBps: number; maxDownloadBps: number }>>([]);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [customTarget, setCustomTarget] = useState<UserInfo | null>(null);
-  const [customUploadMbps, setCustomUploadMbps] = useState("0");
-  const [customDownloadMbps, setCustomDownloadMbps] = useState("0");
+  const [customUploadBps, setCustomUploadBps] = useState(0);
+  const [customDownloadBps, setCustomDownloadBps] = useState(0);
 
   const loadUsers = useCallback(async () => {
     if (!user?.is_root) return;
@@ -80,8 +88,8 @@ export default function UsersPage() {
     setFormRole("user");
     setFormStatus("active");
     setFormQosProfile("default");
-    setFormCustomUploadMbps("0");
-    setFormCustomDownloadMbps("0");
+    setFormCustomUploadBps(0);
+    setFormCustomDownloadBps(0);
     setFormUploadPaused(false);
     setFormDownloadPaused(false);
     setIsModalOpen(true);
@@ -98,11 +106,11 @@ export default function UsersPage() {
     setFormUploadPaused(!!target.uploadPaused);
     setFormDownloadPaused(!!target.downloadPaused);
     if (target.qosCustomEnabled) {
-      setFormCustomUploadMbps(String(Math.round((target.qosCustomUploadBps ?? 0) / 1024 / 1024)));
-      setFormCustomDownloadMbps(String(Math.round((target.qosCustomDownloadBps ?? 0) / 1024 / 1024)));
+      setFormCustomUploadBps(target.qosCustomUploadBps ?? 0);
+      setFormCustomDownloadBps(target.qosCustomDownloadBps ?? 0);
     } else {
-      setFormCustomUploadMbps("0");
-      setFormCustomDownloadMbps("0");
+      setFormCustomUploadBps(0);
+      setFormCustomDownloadBps(0);
     }
     setIsModalOpen(true);
   }
@@ -112,25 +120,27 @@ export default function UsersPage() {
     try {
       const custom = await UsersController.getUserCustomLimit(target.username);
       if (custom.customized) {
-        setCustomUploadMbps(String(Math.round(custom.maxUploadBps / 1024 / 1024)));
-        setCustomDownloadMbps(String(Math.round(custom.maxDownloadBps / 1024 / 1024)));
+        setCustomUploadBps(custom.maxUploadBps);
+        setCustomDownloadBps(custom.maxDownloadBps);
       } else {
-        setCustomUploadMbps("0");
-        setCustomDownloadMbps("0");
+        setCustomUploadBps(0);
+        setCustomDownloadBps(0);
       }
     } catch {
-      setCustomUploadMbps("0");
-      setCustomDownloadMbps("0");
+      setCustomUploadBps(0);
+      setCustomDownloadBps(0);
     }
     setIsCustomModalOpen(true);
   }
 
   async function submitCustomLimit() {
     if (!customTarget) return;
-    const upload = Number(customUploadMbps);
-    const download = Number(customDownloadMbps);
-    if (!Number.isFinite(upload) || upload <= 0 || !Number.isFinite(download) || download <= 0) {
-      toast.error(t("common.saveFailed"));
+    if (!Number.isFinite(customUploadBps) || customUploadBps < 1024) {
+      toast.error(t("users.qos.validation.uploadRange"));
+      return;
+    }
+    if (!Number.isFinite(customDownloadBps) || customDownloadBps < 1024) {
+      toast.error(t("users.qos.validation.downloadRange"));
       return;
     }
     try {
@@ -139,8 +149,8 @@ export default function UsersPage() {
         role: customTarget.role.toLowerCase() === "admin" ? "admin" : "user",
         status: customTarget.status.toLowerCase() === "disabled" ? "disabled" : "active",
         qosProfile: customTarget.qosProfile || "default",
-        customUploadBps: Math.round(upload * 1024 * 1024),
-        customDownloadBps: Math.round(download * 1024 * 1024),
+        customUploadBps: Math.round(customUploadBps),
+        customDownloadBps: Math.round(customDownloadBps),
         qosCustomEnabled: true,
         uploadPaused: !!customTarget.uploadPaused,
         downloadPaused: !!customTarget.downloadPaused,
@@ -191,6 +201,10 @@ export default function UsersPage() {
     if (!formUsername.trim()) return setMsg(t("users.usernameRequired"));
     if (!formDisplayName.trim()) return setMsg(t("users.displayNameRequired"));
     if (editing && editing.role.toLowerCase() === "root") return setMsg(t("users.rootImmutable"));
+    if (editing && formQosProfile === "custom") {
+      if (!Number.isFinite(formCustomUploadBps) || formCustomUploadBps < 1024) return setMsg(t("users.qos.validation.uploadRange"));
+      if (!Number.isFinite(formCustomDownloadBps) || formCustomDownloadBps < 1024) return setMsg(t("users.qos.validation.downloadRange"));
+    }
     const submittingToast = toast.loading(t("common.save"));
     setIsModalOpen(false);
     try {
@@ -202,8 +216,8 @@ export default function UsersPage() {
           role: formRole,
           status: formStatus,
           qosProfile: formQosProfile === "custom" ? (editing.qosProfile || "default") : (formQosProfile.trim() || "default"),
-          customUploadBps: formQosProfile === "custom" ? Math.round(Number(formCustomUploadMbps || "0") * 1024 * 1024) : (editing.qosCustomUploadBps ?? 0),
-          customDownloadBps: formQosProfile === "custom" ? Math.round(Number(formCustomDownloadMbps || "0") * 1024 * 1024) : (editing.qosCustomDownloadBps ?? 0),
+          customUploadBps: formQosProfile === "custom" ? Math.round(formCustomUploadBps) : (editing.qosCustomUploadBps ?? 0),
+          customDownloadBps: formQosProfile === "custom" ? Math.round(formCustomDownloadBps) : (editing.qosCustomDownloadBps ?? 0),
           qosCustomEnabled: formQosProfile === "custom",
           uploadPaused: formUploadPaused,
           downloadPaused: formDownloadPaused,
@@ -255,13 +269,6 @@ export default function UsersPage() {
   }
 
   if (!user?.is_root) return <RootOnlyNoticeCard message={t("auth.rootOnlyUsers")} />;
-
-  const formatBps = (bps?: number) => {
-    const value = Math.max(0, Number(bps ?? 0));
-    if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB/s`;
-    if (value >= 1024) return `${(value / 1024).toFixed(1)} KB/s`;
-    return `${Math.round(value)} B/s`;
-  };
 
   return (
     <div className="h-full w-full overflow-y-auto p-2 md:p-4">
@@ -353,11 +360,11 @@ export default function UsersPage() {
                 <div className="relative pt-4">
                   <span className="pointer-events-none absolute left-0 top-0 text-[10px] leading-3 text-default-500 dark:text-default-400">
                     {u.qosCustomEnabled
-                      ? `(↑${u.uploadPaused ? t("common.disabled") : formatBps(u.qosCustomUploadBps)} / ↓${u.downloadPaused ? t("common.disabled") : formatBps(u.qosCustomDownloadBps)})`
+                      ? `(↑${u.uploadPaused ? t("common.disabled") : formatRateBps(u.qosCustomUploadBps ?? 0, { labels: rateUnitLabels })} / ↓${u.downloadPaused ? t("common.disabled") : formatRateBps(u.qosCustomDownloadBps ?? 0, { labels: rateUnitLabels })})`
                       : (() => {
                           const policy = qosOptions.find((item) => item.id === (u.qosProfile || "default"));
                           if (!policy) return "(↑- / ↓-)";
-                          return `(↑${u.uploadPaused ? t("common.disabled") : formatBps(policy.maxUploadBps)} / ↓${u.downloadPaused ? t("common.disabled") : formatBps(policy.maxDownloadBps)})`;
+                          return `(↑${u.uploadPaused ? t("common.disabled") : formatRateBps(policy.maxUploadBps, { labels: rateUnitLabels })} / ↓${u.downloadPaused ? t("common.disabled") : formatRateBps(policy.maxDownloadBps, { labels: rateUnitLabels })})`;
                         })()}
                   </span>
                   <Select
@@ -447,19 +454,17 @@ export default function UsersPage() {
           </label>
           {editing && formQosProfile === "custom" && (
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              <LargeGlassInput
+              <RateInputField
                 label={t("users.qos.maxUploadMbps")}
-                size="sm"
-                value={formCustomUploadMbps}
-                onValueChange={setFormCustomUploadMbps}
-                commitMode="blur"
+                valueBps={formCustomUploadBps}
+                onValueChangeBps={setFormCustomUploadBps}
+                allowedUnits={["KB", "MB"]}
               />
-              <LargeGlassInput
+              <RateInputField
                 label={t("users.qos.maxDownloadMbps")}
-                size="sm"
-                value={formCustomDownloadMbps}
-                onValueChange={setFormCustomDownloadMbps}
-                commitMode="blur"
+                valueBps={formCustomDownloadBps}
+                onValueChangeBps={setFormCustomDownloadBps}
+                allowedUnits={["KB", "MB"]}
               />
             </div>
           )}
@@ -473,20 +478,8 @@ export default function UsersPage() {
           submitText={t("common.save")}
           cancelText={t("common.cancel")}
         >
-          <LargeGlassInput
-            label={t("users.qos.maxUploadMbps")}
-            size="sm"
-            value={customUploadMbps}
-            onValueChange={setCustomUploadMbps}
-            commitMode="blur"
-          />
-          <LargeGlassInput
-            label={t("users.qos.maxDownloadMbps")}
-            size="sm"
-            value={customDownloadMbps}
-            onValueChange={setCustomDownloadMbps}
-            commitMode="blur"
-          />
+          <RateInputField label={t("users.qos.maxUploadMbps")} valueBps={customUploadBps} onValueChangeBps={setCustomUploadBps} allowedUnits={["KB", "MB"]} />
+          <RateInputField label={t("users.qos.maxDownloadMbps")} valueBps={customDownloadBps} onValueChangeBps={setCustomDownloadBps} allowedUnits={["KB", "MB"]} />
         </FormModal>
       </div>
     </div>

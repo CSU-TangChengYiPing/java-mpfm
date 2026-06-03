@@ -16,6 +16,7 @@ import PaginatedTableShell from "../../../components/common/PaginatedTableShell"
 import ShadowTooltip from "../../../components/common/ShadowTooltip";
 import key from "../../../const/key";
 import FileManager, { type APIError, type TaskInfo } from "../../../controllers/file_manager";
+import { formatRateBps } from "../../../utils/rateFormat";
 
 function normalizeStatus(status?: string): string {
   return (status || "").toUpperCase();
@@ -27,10 +28,7 @@ function isActiveTask(status?: string): boolean {
 }
 
 function formatRate(bps?: number): string {
-  const value = Math.max(0, Number(bps ?? 0));
-  if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB/s`;
-  if (value >= 1024) return `${(value / 1024).toFixed(1)} KB/s`;
-  return `${Math.round(value)} B/s`;
+  return formatRateBps(Number(bps ?? 0));
 }
 
 function formatMb(bytes?: number): string {

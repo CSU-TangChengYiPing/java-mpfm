@@ -25,6 +25,7 @@ import MemoryStorageCard from "./monitor-cards/MemoryStorageCard";
 import NetworkCard from "./monitor-cards/NetworkCard";
 import ServerInfoCard from "./monitor-cards/ServerInfoCard";
 import TrafficStatsCard from "./monitor-cards/TrafficStatsCard";
+import { formatRateBps } from "../../../utils/rateFormat";
 
 function formatTimeLabel(timestamp: string, windowMinutes: TimeWindow): string {
   const date = new Date(timestamp);
@@ -54,6 +55,12 @@ export default function MonitorPage() {
   const { user } = useAuth();
   const [windowMinutes, setWindowMinutes] = useState<TimeWindow>(3);
   const [isDark, setIsDark] = useState(false);
+  const rateUnitLabels = useMemo(() => ({
+    B: t("common.rateUnits.b"),
+    KB: t("common.rateUnits.kb"),
+    MB: t("common.rateUnits.mb"),
+    GB: t("common.rateUnits.gb"),
+  }), [t]);
   const {
     loading,
     overview,
@@ -76,10 +83,7 @@ export default function MonitorPage() {
   }, []);
 
   const formatRate = (bps: number) => {
-    const value = Math.max(0, bps);
-    if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB/s`;
-    if (value >= 1024) return `${(value / 1024).toFixed(1)} KB/s`;
-    return `${Math.round(value)} B/s`;
+    return formatRateBps(bps, { labels: rateUnitLabels });
   };
   const formatBytes = (bytes: number) => {
     const value = Math.max(0, bytes);
@@ -119,17 +123,17 @@ export default function MonitorPage() {
   const userTimelineData = useMemo(() => {
     return [...selectedUserTrend]
       .map((item) => {
-        const ts = new Date(item.timestamp).getTime();
-        if (Number.isNaN(ts)) return null;
-        const iso = new Date(ts).toISOString();
-        return {
-          timestamp: iso,
-          label: formatTimeLabel(iso, windowMinutes),
-          uploadMbps: Number((Math.max(0, item.uploadBps) / (1024 * 1024)).toFixed(3)),
-          downloadMbps: Number((Math.max(0, item.downloadBps) / (1024 * 1024)).toFixed(3)),
-        };
-      })
-      .filter((item): item is { label: string; timestamp: string; uploadMbps: number; downloadMbps: number } => item !== null)
+      const ts = new Date(item.timestamp).getTime();
+      if (Number.isNaN(ts)) return null;
+      const iso = new Date(ts).toISOString();
+      return {
+        timestamp: iso,
+        label: formatTimeLabel(iso, windowMinutes),
+        uploadBps: Math.max(0, item.uploadBps),
+        downloadBps: Math.max(0, item.downloadBps),
+      };
+    })
+      .filter((item): item is { label: string; timestamp: string; uploadBps: number; downloadBps: number } => item !== null)
       .sort((left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime());
   }, [selectedUserTrend, windowMinutes]);
 
@@ -168,7 +172,7 @@ export default function MonitorPage() {
         <MemoryStorageCard overview={overview} memUsedPercent={memUsedPercent} diskUsedPercent={diskUsedPercent} formatStorage={formatStorage} />
         <TrafficStatsCard overview={overview} formatBytes={formatBytes} />
         <CpuStatusCard overview={overview} cpuTrend={cpuTrend} isDark={isDark} />
-        <NetworkCard transferTrend={transferTrend} isDark={isDark} formatRate={formatRate} />
+        <NetworkCard transferTrend={transferTrend} isDark={isDark} />
         <DiskIoCard diskIoTrend={diskIoTrend} isDark={isDark} />
       </div>
 {/* 
@@ -314,7 +318,7 @@ export default function MonitorPage() {
                     minTickGap={18}
                     tickFormatter={(value) => formatTimeLabel(String(value), windowMinutes)}
                   />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(value) => Number(value).toFixed(3)} unit=" MB/s" />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(value) => formatRate(Number(value))} />
                   <Tooltip
                     labelFormatter={(value) => formatTimeWithSecond(String(value))}
                     contentStyle={{
@@ -327,10 +331,10 @@ export default function MonitorPage() {
                     itemStyle={{ color: isDark ? "#d1d5db" : "#1f2937" }}
                   />
                   <Legend />
-                  <Area type="monotone" dataKey="uploadMbps" fill="url(#uploadArea)" stroke="none" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="uploadMbps" stroke="#10b981" dot={{ r: 2 }} name={t("monitor.userUpload")} strokeWidth={2} isAnimationActive={false} />
-                  <Area type="monotone" dataKey="downloadMbps" fill="url(#downloadArea)" stroke="none" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="downloadMbps" stroke="#3b82f6" dot={{ r: 2 }} name={t("monitor.userDownload")} strokeWidth={2} isAnimationActive={false} />
+                  <Area type="monotone" dataKey="uploadBps" fill="url(#uploadArea)" stroke="none" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="uploadBps" stroke="#10b981" dot={{ r: 2 }} name={t("monitor.userUpload")} strokeWidth={2} isAnimationActive={false} />
+                  <Area type="monotone" dataKey="downloadBps" fill="url(#downloadArea)" stroke="none" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="downloadBps" stroke="#3b82f6" dot={{ r: 2 }} name={t("monitor.userDownload")} strokeWidth={2} isAnimationActive={false} />
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
