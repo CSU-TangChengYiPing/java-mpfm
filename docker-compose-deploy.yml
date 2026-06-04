@@ -4,15 +4,15 @@ services:
     container_name: mpfm-deploy-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: mpfm
-      POSTGRES_USER: mpfm
-      POSTGRES_PASSWORD: mpfm_dev_password
-      MPFM_TEST_DB_NAME: mpfm_test
+      POSTGRES_DB: ${MPFM_DB_NAME:-mpfm}
+      POSTGRES_USER: ${MPFM_DB_USERNAME:-mpfm}
+      POSTGRES_PASSWORD: ${MPFM_DB_PASSWORD:-mpfm_dev_password}
+      MPFM_TEST_DB_NAME: ${MPFM_TEST_DB_NAME:-mpfm_test}
     volumes:
       - mpfm_deploy_postgres_data:/var/lib/postgresql/data
       - ./scripts/docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mpfm -d mpfm"]
+      test: ["CMD-SHELL", "pg_isready -U ${MPFM_DB_USERNAME:-mpfm} -d ${MPFM_DB_NAME:-mpfm}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -21,11 +21,20 @@ services:
     image: redis:7-alpine
     container_name: mpfm-deploy-redis
     restart: unless-stopped
+    environment:
+      MPFM_REDIS_PASSWORD: ${MPFM_REDIS_PASSWORD:-}
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - mpfm_deploy_redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+        - CMD-SHELL
+        - |
+          if [ -n "${MPFM_REDIS_PASSWORD}" ]; then
+            redis-cli -a "${MPFM_REDIS_PASSWORD}" ping;
+          else
+            redis-cli ping;
+          fi
       interval: 10s
       timeout: 5s
       retries: 10
@@ -42,26 +51,26 @@ services:
       redis:
         condition: service_healthy
     environment:
-      MPFM_APP_NAME: mpfm-backend
-      MPFM_SPRING_PROFILE: dev
-      MPFM_SERVER_PORT: 8080
-      MPFM_TLS_ENABLED: "false"
-      MPFM_DB_URL: jdbc:postgresql://postgres:5432/mpfm
-      MPFM_DB_USERNAME: mpfm
-      MPFM_DB_PASSWORD: mpfm_dev_password
-      MPFM_REDIS_HOST: redis
-      MPFM_REDIS_PORT: 6379
-      MPFM_REDIS_PASSWORD: ""
-      MPFM_JWT_ISSUER: mpfm-deploy
-      MPFM_JWT_SIGNING_KEY: mpfm_deploy_jwt_signing_key_change_me_32_chars
-      MPFM_ACCESS_TOKEN_EXPIRE_SECONDS: 900
-      MPFM_REFRESH_TOKEN_EXPIRE_SECONDS: 1209600
-      MPFM_ROOT_USERNAME: a123
-      MPFM_ROOT_PASSWORD: a123
-      MPFM_LOCAL_BASE_PATH: /data/local
-      MPFM_AVATAR_BASE_PATH: /data/avatars
-      MPFM_AVATAR_SIGNING_KEY: mpfm_deploy_avatar_signing_key_change_me
-      MPFM_AVATAR_SIGNED_URL_EXPIRE_SECONDS: 300
+      MPFM_APP_NAME: ${MPFM_APP_NAME:-mpfm-backend}
+      MPFM_SPRING_PROFILE: ${MPFM_SPRING_PROFILE:-dev}
+      MPFM_SERVER_PORT: ${MPFM_SERVER_PORT:-8080}
+      MPFM_TLS_ENABLED: ${MPFM_TLS_ENABLED:-false}
+      MPFM_DB_URL: ${MPFM_DB_URL:-jdbc:postgresql://postgres:5432/mpfm}
+      MPFM_DB_USERNAME: ${MPFM_DB_USERNAME:-mpfm}
+      MPFM_DB_PASSWORD: ${MPFM_DB_PASSWORD:-mpfm_dev_password}
+      MPFM_REDIS_HOST: ${MPFM_REDIS_HOST:-redis}
+      MPFM_REDIS_PORT: ${MPFM_REDIS_PORT:-6379}
+      MPFM_REDIS_PASSWORD: ${MPFM_REDIS_PASSWORD:-}
+      MPFM_JWT_ISSUER: ${MPFM_JWT_ISSUER:-mpfm-deploy}
+      MPFM_JWT_SIGNING_KEY: ${MPFM_JWT_SIGNING_KEY:-mpfm_deploy_jwt_signing_key_change_me_32_chars}
+      MPFM_ACCESS_TOKEN_EXPIRE_SECONDS: ${MPFM_ACCESS_TOKEN_EXPIRE_SECONDS:-900}
+      MPFM_REFRESH_TOKEN_EXPIRE_SECONDS: ${MPFM_REFRESH_TOKEN_EXPIRE_SECONDS:-1209600}
+      MPFM_ROOT_USERNAME: ${MPFM_ROOT_USERNAME:-a123}
+      MPFM_ROOT_PASSWORD: ${MPFM_ROOT_PASSWORD:-a123}
+      MPFM_LOCAL_BASE_PATH: ${MPFM_LOCAL_BASE_PATH:-/data/local}
+      MPFM_AVATAR_BASE_PATH: ${MPFM_AVATAR_BASE_PATH:-/data/avatars}
+      MPFM_AVATAR_SIGNING_KEY: ${MPFM_AVATAR_SIGNING_KEY:-mpfm_deploy_avatar_signing_key_change_me}
+      MPFM_AVATAR_SIGNED_URL_EXPIRE_SECONDS: ${MPFM_AVATAR_SIGNED_URL_EXPIRE_SECONDS:-300}
     volumes:
       - mpfm_deploy_backend_data:/data
   frontend:
@@ -69,7 +78,7 @@ services:
       context: ./new_frontend
       dockerfile: Dockerfile.deploy
       args:
-        VITE_BACKEND_ORIGIN: http://localhost
+        VITE_BACKEND_ORIGIN: ${VITE_BACKEND_ORIGIN:-http://localhost}
     container_name: mpfm-deploy-frontend
     restart: unless-stopped
     depends_on:
