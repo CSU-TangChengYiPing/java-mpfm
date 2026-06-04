@@ -140,6 +140,7 @@ public class SftpDriver implements StorageDriver {
 
     @Override
     public void copy(DriverContext context, String srcPath, String dstDirPath) {
+        // copy暂未实现
         throw new BusinessException(ErrorCode.CAPABILITY_NOT_SUPPORTED, "sftp copy not supported");
     }
 
@@ -179,7 +180,8 @@ public class SftpDriver implements StorageDriver {
             SftpDriverUtil.closeQuietly(connection);
         }
     }
-
+    
+    // --- 私有方法 ---
     private String buildTargetPath(String basePath, String path) {
         String normalizedPath = SftpDriverUtil.normalizePath(path);
         if (basePath == null || ".".equals(basePath)) {
