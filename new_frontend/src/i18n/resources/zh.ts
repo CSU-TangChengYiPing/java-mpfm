@@ -143,7 +143,7 @@ export const zh = {
         localRootAutoHint: "local 挂载根目录由系统自动分配，无需手动填写。",
         localRootOptional: "本地根目录（可选，自定义盘符路径）",
         localRoot: "本地根目录", host: "服务器地址", port: "端口", username: "用户名", password: "密码", remoteRoot: "远程根目录", enableAfterCreate: "创建后立即启用",
-        edit: "编辑挂载", passwordOptional: "密码（留空表示不修改）", editPerm: "编辑挂载权限", ownerUser: "归属用户（Owner）", ownerUserEditable: "可修改该挂载的归属用户", ownerUserRootOnly: "仅 root 可修改归属用户",
+        edit: "编辑挂载", passwordOptional: "密码", editPerm: "编辑挂载权限", ownerUser: "归属用户（Owner）", ownerUserEditable: "可修改该挂载的归属用户", ownerUserRootOnly: "仅 root 可修改归属用户",
         ownerGroup: "归属组（Owner Group）", permMatrix: "权限矩阵（UGO）", enterRun: "进入/运行", permDesc: "说明：查看=可读取，修改=可写入/删除，进入/运行=目录可进入、文件可执行。", currentMode: "当前模式",
         self: "自己",
         protocolCapabilityHint: "当前已开放 local / sftp / webdav。远程挂载请填写 host、port、用户名、密码和远程根目录。",

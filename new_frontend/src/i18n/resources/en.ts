@@ -123,7 +123,7 @@ export const en = {
         localRootAutoHint: "Local mount root is auto-assigned by the system; no manual input is required.",
         localRootOptional: "Local root (optional, custom disk path)",
         total: "{{count}} mounts", empty: "No mounts yet", localShort: "Local", name: "Mount", ownerName: "Owner", root: "Root", status: "Status", webdav: "Path", localRoot: "Local root", host: "Host", port: "Port", username: "Username",
-        password: "Password", remoteRoot: "Remote root", enableAfterCreate: "Enable right after creation", edit: "Edit mount", passwordOptional: "Password (leave blank to keep unchanged)", editPerm: "Edit mount permission",
+        password: "Password", remoteRoot: "Remote root", enableAfterCreate: "Enable right after creation", edit: "Edit mount", passwordOptional: "Password ", editPerm: "Edit mount permission",
         ownerUser: "Owner user", ownerUserEditable: "Owner user can be modified", ownerUserRootOnly: "Only root can modify owner user", ownerGroup: "Owner group", permMatrix: "UGO matrix", enterRun: "Enter/Run",
         self: "self",
         permDesc: "View=read, Modify=write/delete, Enter/Run=enter dir or execute file.", currentMode: "Current mode",
