@@ -1,3 +1,5 @@
+# 快速获取环境
+
 services:
   postgres:
     image: postgres:16
